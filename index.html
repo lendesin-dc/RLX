@@ -177,7 +177,8 @@
 </head>
 <body>
 <div class="contenedor">
-    <h2>Registro de Revisión</h2>
+//    <h2>Registro de Revisión</h2>
+<h2>Registro de <span id="nombre-linea" style="color: #28a745; margin-left: 10px;"></span></h2>
 
    <!-- PANEL DE CONTROL DE CALIDAD EN CUADRÍCULA ERGONÓMICA DE 3 COLUMNAS -->
 <div class="pareto-grid">
@@ -268,7 +269,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const idPuesto = urlParams.get('puesto') || "No_Definido"; 
 
 // (Opcional) Puedes mostrarlo en pantalla para que el operario sepa en qué puesto está:
-//document.getElementById("nombrePuestoUI").innerText = "Puesto: " + idPuesto;
+document.getElementById("nombre-linea").innerText = " " + idPuesto;
 
 // 1. CONFIGURACIÓN DEL ENTORNO REMOTO DE GOOGLE SHEETS
 const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbwgXz11ga0JPKWNq98gkaXn0t-N_yO4ZcMgD15Y3V3pIfnau42443kooNknmoFRFZBf/exec"; 
