@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="es">
+    <link rel="icon" type="image/png" href="data:image/png;base64,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">    
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Registro de Revisión</title>
+    <style>
+        /* Ajustes de diseño adaptables (Mobile-First) e Industriales */
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --warning: #ea580c;
+            --danger: #dc3545;
+            --gray-btn: #6b7280;
+            --bg-panel: #f0f2f5;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; 
+            margin: 0; 
+            padding: 5px; 
+            background-color: var(--bg-panel); 
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .contenedor { 
+            max-width: 750px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 8px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+        }
+
+        h2 { text-align: center; margin-top: 5px; margin-bottom: 12px; font-size: 1.3rem; color: #1a1a1a; }
+
+        /* BOTONERA SUPERIOR: PARETO DE ESTADOS EN 3 COLUMNAS */
+.pareto-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.btn-prd {
+    background: #f8fafc;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 15px 2px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    color: #374151;
+}
+
+.btn-prd span.icono {
+    font-size: 2.2rem;
+    line-height: 1;
+}
+
+/* ESTADOS ACTIVOS COMPATIBLES CON TU MOTOR DE JAVASCRIPT */
+.btn-prd.ok-active {
+    background: #16a34a !important; /* Verde industrial */
+    color: white !important;
+    border-color: #bbf7d0 !important;
+    box-shadow: 0 4px 10px rgba(22, 163, 74, 0.25);
+}
+
+.btn-prd.pareto-active {
+    background: #ea580c !important; /* Naranja de alerta */
+    color: white !important;
+    border-color: #fdba74 !important;
+    box-shadow: 0 4px 10px rgba(234, 88, 12, 0.25);
+}
+
+
+        /* LECTOR Y CONTROLES INFERIORES */
+        .franja-lector { 
+            margin-bottom: 22px; 
+            background: #e7f1ff; 
+            padding: 8px; 
+            border-radius: 6px; 
+            border: 1px solid #b6d4fe; 
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-qr { 
+            flex-grow: 1;
+            padding: 8px; 
+            font-size: 1rem; 
+            caret-color: #2563eb; /* Pinta el cursor de azul eléctrico para que resalte */
+            font-weight: 800;    /* Vuelve las letras y el cursor mucho más gruesos al escribir */
+    
+
+          /*  font-weight: bold;  */
+            border: 2px solid #86b7fe; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        /* ANIMACIÓN PARA SIMULAR EL CURSOR DE SOBREESCRITURA CLÁSICO (BLOQUE ANCHO) */
+@keyframes parpadeoBloque {
+    0%, 100% { border-left-color: #ea580c; } /* Color de tu cursor naranja */
+    50% { border-left-color: transparent; }
+}
+
+/* MODIFICACIÓN DE TU INPUT CUANDO TIENE EL FOCO EN MODO DIGITACIÓN */
+.input-qr:focus {
+    caret-color: transparent !important; /* Ocultamos la línea delgada nativa del navegador */
+    border-left: 6px solid #ea580c !important; /* Creamos un bloque físico grueso a la izquierda */
+    padding-left: 10px !important;
+    animation: parpadeoBloque 1s infinite; /* Forzamos al bloque completo a parpadear como sobreescritura */
+}
+
+
+        .btn-operacion {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-azul-camara { background-color: var(--primary); color: white; }
+        .btn-naranja-pausa { background-color: var(--warning); color: white; }
+
+        /* EFECTOS DINÁMICOS DE EXPANSIÓN POR PISTOLA */
+        .input-qr.modo-input-maximo { width: 75% !important; border-color: var(--primary); }
+        .btn-operacion.modo-enter-azul { background-color: var(--primary) !important; color: white !important; width: 25% !important; }
+
+        /* TABLA DE REGISTROS */
+        .tabla-contenedor { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 6px; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 650px; }
+        th { background: #212529; color: white; padding: 9px 3px; text-transform: uppercase; font-size: 12px; }
+        td { padding: 8px 4px; border-bottom: 1px solid #dee2e6; }
+        tr.row-reparar { background-color: #fff7ed !important; }
+        tr.row-pausa-sistema { background-color: #fef2f2 !important; }
+
+        /* BADGES ESTADOS */
+        .badge-ok { background-color: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .badge-reparar { background-color: #ffedd5; color: #ea580c; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .badge-pausa { background-color: #fee2e2; color: #ef4444; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+
+        /* ANIMACIÓN DE PARPADEO PARA RELOJ DE ARENA */
+        @keyframes blink { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+        .sincro-espera { color: #ca8a04; font-weight: bold; animation: blink 1s infinite; }
+
+        /* CAPAS GIGANTES DE CONFIRMACIÓN Y TIEMPO MUERTO */
+        .modal-exito {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(16,185,129,0.95); z-index: 10000;
+            align-items: center; justify-content: center; flex-direction: column; color: white; text-align: center;
+        }
+        .modal-exito.contenedor-naranja { background: rgba(234, 88, 12, 0.95) !important; }
+
+        .capa-pausa {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(31, 41, 55, 0.96); z-index: 9999;
+            align-items: center; justify-content: center; flex-direction: column; color: white; text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="contenedor">
+    <h2>Registro de Revisión</h2>
+
+   <!-- PANEL DE CONTROL DE CALIDAD EN CUADRÍCULA ERGONÓMICA DE 3 COLUMNAS -->
+<div class="pareto-grid">
+    <button id="btn-ok-base" class="btn-prd ok-active" onclick="fijarEstadoCalidad('OK', this)">
+        <span class="icono">OK 🟢</span>
+    <!--    <span>OK</span>  -->
+    </button>
+    <button class="btn-prd" onclick="fijarEstadoCalidad('DD', this)">
+        <span class="icono">DD ⚠️</span>
+     <!--   <span>DD</span> -->
+    </button>
+    <button class="btn-prd" onclick="fijarEstadoCalidad('FUGA', this)">
+        <span class="icono">FUGA 💧</span>
+     <!--   <span>FUGA</span> -->
+    </button>
+    <button class="btn-prd" onclick="fijarEstadoCalidad('ELEC', this)">
+        <span class="icono">ELEC ⚡</span>
+     <!--   <span>ELEC</span> -->
+    </button>
+    <button class="btn-prd" onclick="fijarEstadoCalidad('COMP', this)">
+        <span class="icono">COMP ⚙️</span>
+     <!--   <span>COMP</span> -->
+    </button>
+    <button class="btn-prd" onclick="fijarEstadoCalidad('EMB', this)">
+        <span class="icono">EMB 📦</span>
+     <!--   <span>EMB</span> -->
+    </button>
+</div>
+
+
+    <!-- CUADRO DE LECTURA CON PROPORCIONES ERGONÓMICAS RÍGIDAS (40% / 30% / 30%) -->
+    <div class="franja-lector" style="display: flex; gap: 4px; align-items: center; width: 100%; box-sizing: border-box; padding: 2px 4px; overflow: hidden;">
+    <button id="btn-camara-toggle" class="btn-operacion btn-azul-camara" style="width: 40% !important; max-width: 40%; padding: 8px 2px; font-size: 1.6rem; font-weight: bold; white-space: nowrap; box-sizing: border-box;" onclick="simularToggleCamara()">📸 Escanear</button>
+    <input type="text" id="txt-lector" class="input-qr" style="width: 30% !important; max-width: 30%; padding: 12px 2px; font-size: 1rem; font-weight: bold; text-align: center; box-sizing: border-box;" placeholder="Digite..." onfocus="activarModoDigitacion()" onkeypress="procesarLectura(event)">
+    <button id="btn-pausa-dinamico" class="btn-operacion btn-naranja-pausa" style="width: 30% !important; max-width: 30%; padding: 8px 2px; font-size: 1.6rem; font-weight: bold; white-space: nowrap; box-sizing: border-box;" onclick="gestionarBotonDinamico()">⏸️ Pausa</button>
+    </div>
+    
+    <!-- CONTROL HISTORIAL INTERACTIVO -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h3 style="margin: 0; font-family: sans-serif; font-size: 1.1rem;">Registros</h3>
+            <button id="btn-cambiar-modo" onclick="conmutarModoVista()" style="background-color: #2563eb; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s;">
+                 📊 Ver SubTotales
+            </button>
+        </div>
+        <button id="btn-limpiar-vista" onclick="limpiarPantallaCompleta()" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight:bold; font-size: 1rem;">Limpiar Vista</button>
+    </div>
+
+    <!-- VISOR DE TABLAS PRINCIPALES -->
+    <div class="tabla-contenedor">
+        <table id="tabla-registros">
+            <thead id="tabla-encabezado"></thead>
+            <tbody id="tabla-cuerpo"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- VENTANA EMERGENTE GIGANTE: ANUNCIOS DE REVISIÓN -->
+<div id="modal-exito" class="modal-exito">
+    <div style="font-size: 6rem; margin-bottom: 5px;">✅</div>
+    <div style="font-size: 2.2rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">Lectura Registrada</div>
+    <div id="sku-contenedor-cartel" style="background:rgba(0,0,0,0.2); padding: 20px 40px; border-radius: 12px; margin-top: 15px; min-width: 300px;">
+        <div style="font-size: 1.1rem; opacity: 0.85; margin-bottom: 5px;">SKU PROCESADO:</div>
+        <div id="modal-sku" style="font-size: 2.8rem; font-weight: 900; line-height: 1; word-break: break-all;">-</div>
+        <div style="font-size: 1.1rem; opacity: 0.85; margin-bottom: 5px;">SERIE:</div>
+        <div id="modal-serie" style="font-size: 2.8rem; font-weight: 900; line-height: 1; word-break: break-all;">-</div>
+    </div>
+    <div style="font-size: 1.0rem; margin-top: 30px; opacity: 0.7; font-style: italic;">Continuando en 2 segundos...</div>
+
+</div>
+
+
+<!-- CAPA GIGANTE: TIEMPO MUERTO EN SEGUNDO PLANO -->
+<div id="capa-pausa" class="capa-pausa">
+    <div style="font-size: 7rem; margin-bottom: 10px;">⏸️</div>
+    <div style="font-size: 3rem; font-weight: 900; letter-spacing: 1px;">LÍNEA PAUSADA</div>
+    <div style="font-size: 1.5rem; opacity: 0.85; margin-bottom: 35px; font-style: italic;">Registro de Paros.</div>
+    <button onclick="gestionarBotonDinamico()" style="background: blue; color: var(--warning); border: none; padding: 18px 50px; border-radius: 8px; font-weight: 900; font-size: 1.8rem; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        ▶️ REANUDAR OPERACIÓN
+    </button>
+</div>
+
+
+<script>
+// 0. IDENTIFICACION DE PUESTO DE TRABAJO
+  // Esto lee automáticamente lo que esté después del "?" en la URL
+const urlParams = new URLSearchParams(window.location.search);
+const idPuesto = urlParams.get('puesto') || "No_Definido"; 
+
+// (Opcional) Puedes mostrarlo en pantalla para que el operario sepa en qué puesto está:
+document.getElementById("nombrePuestoUI").innerText = "Puesto: " + idPuesto;
+
+// 1. CONFIGURACIÓN DEL ENTORNO REMOTO DE GOOGLE SHEETS
+const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbwgXz11ga0JPKWNq98gkaXn0t-N_yO4ZcMgD15Y3V3pIfnau42443kooNknmoFRFZBf/exec"; 
+
+// MAPEO ERGONÓMICO DE ICONOS INDUSTRIALES PARA RENDERIZADO VISUAL
+const MAPA_ICONOS = {
+  "OK": "🟢",
+  "DD": "⚠️",
+  "FUGA": "💧",
+  "ELEC": "⚡",
+  "COMP": "⚙️",
+  "EMB": "📦",
+  "PAUSA": "⏸️"
+};
+
+// 2. VARIABLES DE CONTROL OPERACIONAL Y MOTOR DE TIEMPOS
+let seleccionCalidadActiva = "OK";
+let estadoCalidadPrevio = "OK"; 
+let enModoDigitacion = false;
+let lineaEnPausa = false;
+let camaraActivaHardware = false;
+let modoVistaActual = "listado";
+
+// Inicializadores de base de datos local en RAM/Session
+let historialLecturasPRD = JSON.parse(localStorage.getItem('historial_bodega_prd')) || [];
+let ultimoHitoTime = Date.now(); // Estampa del milisegundo exacto del hito anterior
+
+// 3. CONTROL CENTRAL DE LA INTERFAZ Y PUESTOS (CEREBRO PRD)
+function fijarEstadoCalidad(codigo, boton) {
+    document.querySelectorAll('.btn-prd').forEach(b => {
+        b.classList.remove('ok-active', 'pareto-active');
+    });
+    
+    seleccionCalidadActiva = codigo;
+    if (codigo === "OK") {
+        boton.classList.add('ok-active');
+    } else {
+        boton.classList.add('pareto-active');
+    }
+    console.log("Estado seleccionado listo para captura:", seleccionCalidadActiva);
+}
+
+// 4. PROCESADOR DE ENTRADA CENTRAL DE DATOS (BACKOFFICE DE LECTURA)
+function procesarLectura(evento) {
+    if (evento.key !== 'Enter') return;
+    const input = document.getElementById('txt-lector');
+    const cadenaQR = input.value.trim();
+
+    // EXCEPCIÓN DETECTADA: Si el resultado es NO OK (cámara cerrada o enter vacío)
+    if (cadenaQR === "") {
+        console.log("Excepción: Captura vacía. Retornando a botón anterior:", estadoCalidadPrevio);
+        restaurarBotoneraInferior();
+        
+        // Retornamos la interfaz exactamente al botón que tenía antes de abrir la cámara
+        const botonAActivar = Array.from(document.querySelectorAll('.btn-opcion'))
+                                   .find(b => b.innerText.includes(estadoCalidadPrevio));
+        if (botonAActivar) fijarEstadoCalidad(estadoCalidadPrevio, botonAActivar);
+        return;
+    }
+
+    // VERIFICACIÓN Y TRADUCCIÓN DE FORMATO DE BODEGA
+    if (!cadenaQR.includes('#')) {
+        alert("¡CÓDIGO NO VÁLIDO!\n\nAl formato le falta el separador (#). Pruebe de nuevo.");
+        input.value = "";
+        procesarLectura({ key: 'Enter' }); // Fuerza el disparo de retorno por excepción
+        return;
+    }
+
+    const segmentos = cadenaQR.split('#');
+    const skuExtraido = segmentos[0] || '-';
+    const serieExtraida = segmentos[1] || '-';
+    const loteExtraido = segmentos[2] || '-'; 
+    //const estadoOrdenExtraido = segmentos[2] || seleccionCalidadActiva;
+
+    // VERIFICACIÓN DE REPETIDOS (RESTRICCIÓN DE MENOS DE 5 MINUTOS)
+    const momentoActual = Date.now();
+    const registroDuplicado = historialLecturasPRD.find(item => 
+        item.serie === serieExtraida && item.sku === skuExtraido && !item.esAnulado
+    );
+
+    if (registroDuplicado) {
+        const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
+        if (diferenciaMinutos < 5) {
+            alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada en este puesto hace ${diferenciaMinutos.toFixed(1)} minutos.`);
+            input.value = "";
+            procesarLectura({ key: 'Enter' });
+            return;
+        }
+    }
+
+    // AUDITORÍA DE TIEMPOS MUERTOS Y PRODUCTIVIDAD (CÁLCULO EN SEGUNDOS PUROS)
+    const segundosPurosCiclo = Math.round((momentoActual - ultimoHitoTime) / 1000);
+    ultimoHitoTime = momentoActual; // Reseteo inmediato del hito para el siguiente ciclo
+
+    // ARQUITECTURA DEL OBJETO DE DATOS ASÍNCRONO
+const nuevoRegistro = {
+    id: momentoActual,
+    hora: new Date().toLocaleTimeString('es-ES', { hour:"2-digit",minute:"2-digit", hour12 : false }),
+    qr: cadenaQR,
+    sku: skuExtraido,
+    serie: serieExtraida,
+    lote: loteExtraido, // <-- INYECTAMOS EL LOTE EN EL OBJETO
+    motivo: seleccionCalidadActiva, 
+    tiempoSegundos: segundosPurosCiclo, 
+    sincronizado: false, 
+    esAnulado: false
+};
+ 
+    historialLecturasPRD.unshift(nuevoRegistro);
+    guardarEnMemoriaLocal();
+
+    // EMISIÓN DE AVISOS ACÚSTICOS INDUSTRIALES Y PANTALLA GIGANTE
+    sonarBip750Hz();
+    dispararCartelExito(skuExtraido + (seleccionCalidadActiva !== "OK" ? ` (${seleccionCalidadActiva})` : ""), 
+                        serieExtraida,
+                        seleccionCalidadActiva !== "OK");
+
+    // FLUJO DE RETORNO EXCELENTE: Vuelve los botones a modo inicial (OK seleccionado)
+    restaurarBotoneraInferior();
+    fijarEstadoCalidad('OK', document.getElementById('btn-ok-base'));
+    estadoCalidadPrevio = "OK"; 
+
+    actualizarTablaVista();
+    input.value = "";
+
+    // TRANSMISIÓN INMEDIATA A GOOGLE SHEETS
+    enviarAGoogleSheets(nuevoRegistro);
+}
+
+// 5. MANEJO NATIVO DE HARDWARE (CÁMARA / DETECTOR)
+// Variable global para controlar la transmisión de video
+let streamActivoBodega = null;
+
+async function simularToggleCamara() {
+    // Al abrir guardamos en la memoria el botón que estaba activo
+    estadoCalidadPrevio = seleccionCalidadActiva;
+    
+    // Si la cámara ya está activa, el botón actúa para apagarla (Cancelar)
+    if (camaraActivaHardware) {
+        apagarCamaraHardware();
+        return;
+    }
+
+    // Levantamos visualmente la ventana del escáner inyectando el visor dinámico si no existe
+    let modal = document.getElementById('modal-escaner');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-escaner';
+        
+
+        // MODIFICACIÓN ERGONÓMICA: Subir el visor de la cámara al tercio superior
+        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; display:flex; align-items:center; justify-content:flex-start; flex-direction:column; padding-top:40px; box-sizing:border-box;";
+   //   modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column;";
+        modal.innerHTML = `
+            <div style="width:320px; height:320px; border:4px dashed #0d6efd; border-radius:12px; overflow:hidden; background:#000; position:relative;">
+                <video id="video-bodega-stream" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+                <div style="position:absolute; top:50%; left:10%; width:80%; height:2px; background:rgba(255,0,0,0.8); box-shadow:0 0 4px #ff0000; pointer-events:none;"></div>
+            </div>
+            <button onclick="apagarCamaraHardware()" style="margin-top:25px; padding:14px 30px; background:#dc3545; color:white; border:none; border-radius:6px; font-weight:bold; font-size:16px; cursor:pointer;">❌ Cancelar Escaneo</button>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    modal.style.display = "flex";
+    camaraActivaHardware = true;
+
+    // Encendido del hardware físico (Lente Trasero "environment" a alta resolución)
+    try {
+        streamActivoBodega = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: false
+        });
+        const videoElemento = document.getElementById('video-bodega-stream');
+        videoElemento.srcObject = streamActivoBodega;
+        
+        // Iniciamos el bucle de análisis rápido acelerado cada 180 milisegundos
+        window.bucleEscaneo = setInterval(analizarCuadroCamara, 180);
+    } catch (err) {
+        alert("Acceso al hardware bloqueado. Asegúrese de dar permisos de cámara en la barra de direcciones HTTPS.");
+        apagarCamaraHardware();
+    }
+}
+
+// Bucle analizador compatible cross-platform
+async function analizarCuadroCamara() {
+    const video = document.getElementById('video-bodega-stream');
+    if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) return;
+
+    // Si el dispositivo tiene soporte nativo (Android Chrome), procesa de forma acelerada por GPU
+    if ('BarcodeDetector' in window) {
+        try {
+            const detector = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13'] });
+            const codigos = await detector.detect(video);
+            if (codigos.length > 0) {
+                document.getElementById('txt-lector').value = codigos[0].rawValue;
+                apagarCamaraHardware();
+                procesarLectura({ key: 'Enter' }); // Disparador automático
+            }
+        } catch (e) { /* Silencio en bucle */ }
+    } else {
+        // FALLBACK DISPOSITIVOS DE PLANTA (Si la pistola de lectura es el único canal o usas iOS)
+        // El visor se mantendrá abierto permitiendo enfocar el objetivo para el operario
+    }
+}
+
+function apagarCamaraHardware() {
+    clearInterval(window.bucleEscaneo);
+    if (streamActivoBodega) {
+        streamActivoBodega.getTracks().forEach(track => track.stop());
+    }
+    const modal = document.getElementById('modal-escaner');
+    if (modal) modal.style.display = "none";
+    
+    camaraActivaHardware = false;
+    
+    // Si se cerró sin lectura, procesa la excepción vacía para retornar los botones al estado inicial
+    if (document.getElementById('txt-lector').value.trim() === "") {
+        procesarLectura({ key: 'Enter' });
+    }
+}
+
+// 6. CONTROL DE MUTACIONES ERGONÓMICAS DE PANTALLA
+// 6. CONTROL DE MUTACIONES ERGONÓMICAS DE LA FRANJA DE HARDWARE
+// 6. CONTROL DE MUTACIONES ERGONÓMICAS DE LA FRANJA DE HARDWARE (CON CURSOR GRUESO A LA IZQUIERDA)
+function activarModoDigitacion() {
+    if (enModoDigitacion) return;
+    enModoDigitacion = true;
+
+    // 1. Ocultamos el botón de Escanear
+    document.getElementById('btn-camara-toggle').style.display = "none";
+
+    // 2. Expandimos el casillero al 70% y movemos el texto/cursor a la izquierda con letra más gorda
+    const input = document.getElementById('txt-lector');
+    input.style.setProperty('width', '70%', 'important');
+    input.style.setProperty('max-width', '70%', 'important');
+    input.style.setProperty('text-align', 'left', 'important'); // <-- FUERZA EL CURSOR AL BORDE IZQUIERDO
+    input.style.setProperty('padding-left', '15px', 'important'); // <-- SEPARACIÓN ELEGANTE DEL BORDE
+    input.style.setProperty('font-size', '18px', 'important'); // <-- LETRA MÁS GRANDE Y VISIBLE
+    input.placeholder = " Digite manualmente el código...";
+
+    // TRUCO INDUSTRIAL: Le asignamos el modo "text" para que el celular despliegue el teclado táctil al operario
+    input.setAttribute('inputmode', 'text');
+    input.focus();
+
+    // 3. Transformamos el botón derecho en ENTER (30%)
+    const btnDerecho = document.getElementById('btn-pausa-dinamico');
+    if (btnDerecho) {
+        btnDerecho.innerText = "➡️ ENTER";
+        btnDerecho.style.setProperty('width', '30%', 'important');
+        btnDerecho.style.setProperty('max-width', '30%', 'important');
+        btnDerecho.classList.remove('btn-naranja-pausa');
+        btnDerecho.classList.add('modo-enter-azul');
+        btnDerecho.style.backgroundColor = "#2563eb";
+    }
+}
+
+function restaurarBotoneraInferior() {
+    enModoDigitacion = false;
+    
+    // 1. Restauramos el botón de Escanear (40%)
+    const btnCamara = document.getElementById('btn-camara-toggle');
+    if (btnCamara) btnCamara.style.display = "block";
+
+    // 2. Regresamos el casillero a su tamaño compacto del 30% y centramos el texto de reposo
+    const input = document.getElementById('txt-lector');
+    input.style.setProperty('width', '30%', 'important');
+    input.style.setProperty('max-width', '30%', 'important');
+    input.style.setProperty('text-align', 'center', 'important'); // <-- VUELVE AL CENTRO CUANDO SE ADORMECE
+    input.style.setProperty('padding-left', '2px', 'important');
+    input.style.setProperty('font-size', '14px', 'important');
+    input.placeholder = "Digite...";
+
+  // Bloqueamos el teclado de nuevo para el modo reposo y le quitamos el foco
+    input.setAttribute('inputmode', 'none'); 
+    
+    input.blur();
+
+    // 3. Devolvemos el botón derecho a su función original de Pausa (30%)
+    const btnDerecho = document.getElementById('btn-pausa-dinamico');
+    if (btnDerecho) {
+        btnDerecho.innerText = lineaEnPausa ? "▶️ Reanudar" : "⏸️ Pausa";
+        btnDerecho.style.setProperty('width', '30%', 'important');
+        btnDerecho.style.setProperty('max-width', '30%', 'important');
+        btnDerecho.classList.remove('modo-enter-azul');
+        btnDerecho.classList.add('btn-naranja-pausa');
+        btnDerecho.style.backgroundColor = lineaEnPausa ? "#16a34a" : "#f97316";
+    }
+}
+
+//quizas deba borrarlo
+
+function gestionarBotonDinamico() {
+    if (enModoDigitacion) {
+        procesarLectura({ key: 'Enter' });
+    } else {
+        alternarPausaLinea();
+    }
+}
+
+// 7. LÓGICA DE TIEMPOS MUERTOS (PAUSA DINÁMICA TRATADA COMO SKU)
+function alternarPausaLinea() {
+    const btn = document.getElementById('btn-pausa-dinamico');
+    const capaPausa = document.getElementById('capa-pausa');
+    const ahora = Date.now();
+
+    if (!lineaEnPausa) {
+        // DETENCIÓN: Se calcula cuánto se trabajó en el SKU previo antes de congelar la línea
+        const segundosPrevios = Math.round((ahora - ultimoHitoTime) / 1000);
+        ultimoHitoTime = ahora;
+        lineaEnPausa = true;
+        
+        if (btn) {
+            btn.innerText = "▶️ Reanudar";
+            btn.style.backgroundColor = "#16a34a";
+        }
+        if (capaPausa) capaPausa.style.display = "flex";
+    } else {
+        // REANUDACIÓN: Calculamos los segundos exactos consumidos por el tiempo muerto
+        const segundosPausaMuerta = Math.round((ahora - ultimoHitoTime) / 1000);
+        ultimoHitoTime = ahora;
+        lineaEnPausa = false;
+
+        // Estructuramos la pausa de forma idéntica a un SKU de control para la base de datos
+        const registroPausa = {
+            id: ahora,
+            hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute:"2-digit", hour12: false }),
+            qr: "SISTEMA_PAUSA#TOTAL",
+            sku: "PAUSA", // Queda agrupado de forma idéntica
+            serie: "DETENCION",
+            motivo: "PAUSA",
+            tiempoSegundos: segundosPausaMuerta,
+            sincronizado: false,
+            esAnulado: false
+        };
+
+        historialLecturasPRD.unshift(registroPausa);
+        guardarEnMemoriaLocal();
+        actualizarTablaVista();
+        enviarAGoogleSheets(registroPausa);
+
+        if (btn) {
+            btn.innerText = "⏸️ Pausa";
+            btn.style.backgroundColor = "#f97316";
+        }
+        if (capaPausa) capaPausa.style.display = "none";
+    }
+}
+
+// 8. RENDERIZADO AVANZADO DE VISTAS (TIEMPO DECIMAL VS TIEMPO SEGUNDOS) - CONTINUACIÓN
+function conmutarModoVista() {
+    const boton = document.getElementById('btn-cambiar-modo');
+    if (modoVistaActual === "listado") {
+        modoVistaActual = "subtotales";
+        boton.innerText = "📄 Ver Listado";
+        boton.style.backgroundColor = "#4b5563";
+    } else {
+        modoVistaActual = "listado";
+        boton.innerText = "📊 Ver SubTotales";
+        boton.style.backgroundColor = "#2563eb";
+    }
+    actualizarTablaVista();
+}
+
+function actualizarTablaVista() {
+    const thead = document.getElementById('tabla-encabezado');
+    const tbody = document.getElementById('tabla-cuerpo');
+    if (!tbody || !thead) return;
+
+    // MODO 1: LISTADO CRONOLÓGICO DE ALTO CONTRASTE (5 COLUMNAS)
+    if (modoVistaActual === "listado") {
+        thead.innerHTML = `
+            <tr>
+                <th style="width: 15%;">Hora</th>
+                <th style="width: 30%;">QR</th>
+                <th style="width: 20%;">Producto</th>
+                <th style="width: 15%;">Duración</th>
+                <th style="width: 20%; text-align: center;">Estado Nube</th>
+            </tr>
+        `;
+        tbody.innerHTML = "";
+
+        historialLecturasPRD.forEach(reg => {
+            const fila = document.createElement('tr');
+            
+            // Colores suaves de fondo según el tipo de registro
+            if (reg.motivo === "PAUSA") fila.className = "row-pausa-sistema";
+            else if (reg.motivo !== "OK") fila.className = "row-reparar";
+
+            // LOGICA AUTOMÁTICA DE ESTADO NUBE SOLICITADA
+            let celdaEstadoNube = "";
+            if (!reg.sincronizado) {
+                // Si está en cola: Texto del estado + Reloj parpadeando
+                celdaEstadoNube = `<span class="sincro-espera" style="font-size: 1.1rem; font-weight: bold; color: #ca8a04;">${reg.motivo} ⏳</span>`;
+            } else {
+                // Si ya está en la nube: Texto del estado + Su emoji correspondiente fijado
+                const emojiDefinitivo = MAPA_ICONOS[reg.motivo] || "✔️";
+                celdaEstadoNube = `<span style="font-size: 1.1rem; font-weight: bold; color: #1e293b;">${reg.motivo} ${emojiDefinitivo}</span>`;
+            }
+
+            // Inyección de celdas con tipografía grande para operario y chica para el QR
+            fila.innerHTML = `
+                <td style="font-size: 1.0rem; font-weight: bold; color: #1e293b;">${reg.hora}</td>
+                <td style="color: #64748b; font-size: 0.72rem; font-family: monospace; line-height: 1.2; word-break: break-all; white-space: normal;">${reg.qr}</td>
+                <td style="font-size: 1.1rem; font-weight: 900; color: #1e3a8a; letter-spacing: 0.3px;">${reg.sku}</td>
+                <td style="font-size: 1.1rem; font-weight: bold; color: #2563eb;">⏱️ ${reg.tiempoSegundos}s</td>
+                <td style="text-align: center; border-left: 1px solid #e2e8f0; background: #f8fafc;">${celdaEstadoNube}</td>
+            `;
+            tbody.appendChild(fila);
+        });
+
+    // MODO 2: REPORTE DE SUBTOTALES ACUMULADOS EN PANTALLA
+        // MODO 2: REPORTE DE SUBTOTALES ACUMULADOS OPTIMIZADO PARA MÓVIL
+    } else if (modoVistaActual === "subtotales") {
+                // DISTRIBUCIÓN ANTIVUELCO DE ANCHOS (TOTAL: 100%)
+        thead.innerHTML = `
+            <tr>
+                <th style="width: 30%; text-align: left;">Producto</th>
+                <th style="width: 14%; text-align: center;">Válidos</th>
+                <th style="width: 14%; text-align: center;">Fallados</th>
+                <th style="width: 22%; text-align: center; background-color: #1e293b; color: white;">Tiempo</th>
+                <th style="width: 14%; text-align: center;">Total</th>
+            </tr>
+        `;
+
+        tbody.innerHTML = "";
+
+        const agrupadoSKU = {};
+
+        historialLecturasPRD.forEach(reg => {
+            const skuClave = reg.sku ? String(reg.sku).trim() : "ERROR";
+            if (!agrupadoSKU[skuClave]) {
+                agrupadoSKU[skuClave] = {
+                    sku: skuClave,
+                    validos: 0,
+                    incidencias: 0,
+                    segundosAcumulados: 0
+                };
+            }
+
+            if (reg.motivo === "OK") agrupadoSKU[skuClave].validos++;
+            else agrupadoSKU[skuClave].incidencias++;
+
+            // Filtro de descarte para tiempos mayores a 20 minutos (1200 segundos)
+            if ((reg.tiempoSegundos || 0) <= 1200) {
+                agrupadoSKU[skuClave].segundosAcumulados += (reg.tiempoSegundos || 0);
+            }
+        });
+
+        Object.values(agrupadoSKU).forEach(item => {
+            const fila = document.createElement('tr');
+            const totalItems = item.validos + item.incidencias;
+
+            // Conversión matemática ergonómica a minutos con un decimal
+            const minutosDecimales = (item.segundosAcumulados / 60).toFixed(1);
+            const tiempoOperadorTexto = `${minutosDecimales} min`;
+
+            fila.innerHTML = `
+                <td style="font-size: 1.0rem; text-align: left;"><strong style="color: #1e3a8a;">${item.sku}</strong></td>
+                <td style="text-align: center; color: #16a34a; font-weight: bold; font-size: 1.1rem;">${item.validos} u.</td>
+                <td style="text-align: center; color: ${item.incidencias > 0 ? '#ea580c' : '#9ca3af'}; font-weight: bold; font-size: 1.1rem;">${item.incidencias} u.</td>
+                <td style="text-align: center; font-weight: bold; color: #1e3a8a; background-color: #eff6ff; font-size: 1.1rem;">⏱️ ${tiempoOperadorTexto}</td>
+                <td style="text-align: center; font-weight: bold; background-color: #f3f4f6; font-size: 1.1rem;">${totalItems} u.</td>
+            `;
+            tbody.appendChild(fila);
+        });
+
+        if (Object.keys(agrupadoSKU).length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:#9ca3af;">No hay registros en este turno.</td></tr>`;
+        }
+    }
+
+}
+
+
+// 9. MOTOR ASÍNCRONO DE TRANSMISIÓN (BACKOFFICE DE DATOS GOOGLE)
+
+// 9. MOTOR ASÍNCRONO DE TRANSMISIÓN CON REINTENTO AUTOMÁTICO DE COLA
+function enviarAGoogleSheets(objetoRegistro) {
+    if (!navigator.onLine) {
+        console.warn("Dispositivo sin red en este milisegundo. Registro guardado en cola local.");
+        return;
+    }
+
+    fetch(URL_GOOGLE_APP, {
+        method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(objetoRegistro)
+    })
+    .then(respuesta => respuesta.json())
+    .then(datosNube => {
+        if (datosNube && datosNube.resultado === "ok") {
+            objetoRegistro.sincronizado = true;
+            guardarEnMemoriaLocal();
+            actualizarTablaVista(); // Cambia el reloj ⏳ por el emoji definitivo 🟢
+            console.log("Sincronización exitosa para ID:", objetoRegistro.id);
+            
+            // TRUCO INDUSTRIAL: Si este envío tuvo éxito, barremos la cola por si había registros antiguos atrapados
+            reprocesarColaPendiente();
+        }
+    })
+    .catch(err => {
+        console.error("Fallo de red en transmisión asíncrona. Se reintentará luego:", err);
+    });
+}
+
+// NUEVA FUNCIÓN: ESCANER DE HISTORIAL PARA IDENTIFICAR REGISTROS ATRAPADOS EN MODO AVIÓN
+function reprocesarColaPendiente() {
+    if (!navigator.onLine) return; // Si no hay internet real, ni lo intentamos
+
+    // Buscamos de atrás hacia adelante (los más antiguos primero) que tengan sincronizado === false
+    const registrosAtrapados = historialLecturasPRD.filter(reg => !reg.sincronizado);
+    
+    if (registrosAtrapados.length > 0) {
+        console.log(`¡Se detectaron ${registrosAtrapados.length} registros en cola! Despachando a Google Sheets...`);
+        
+        // Enviamos el primero de la cola. Al terminar con éxito, este llamará automáticamente al siguiente
+        enviarAGoogleSheets(registrosAtrapados[registrosAtrapados.length - 1]);
+    }
+}
+
+// ESCUCHADORES NATIVOS DE HARDWARE: Detectan el milisegundo exacto en que quitas el modo avión
+window.addEventListener('online', () => {
+    console.log("📡 Red restablecida en el dispositivo de planta. Activando vaciado de cola...");
+    reprocesarColaPendiente();
+});
+
+
+
+
+// 10. UTILIDADES INDUSTRIALES (AUDIO Y LIMPIEZA)
+let miAudioContext = null;
+function sonarBip750Hz() {
+    try {
+        if (!miAudioContext) miAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (miAudioContext.state === 'suspended') miAudioContext.resume();
+        
+        const osc = miAudioContext.createOscillator();
+        const gain = miAudioContext.createGain();
+        osc.connect(gain);
+        gain.connect(miAudioContext.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, miAudioContext.currentTime); // Tono industrial limpio
+        gain.gain.setValueAtTime(0.9, miAudioContext.currentTime);
+        
+        osc.start();
+        osc.stop(miAudioContext.currentTime + 0.25);
+    } catch (e) { console.error("Audio bloqueado por navegador:", e); }
+}
+
+function dispararCartelExito(textosku, textoserie, esDefecto) {
+    const modal = document.getElementById('modal-exito');
+    document.getElementById('modal-sku').innerText = textosku;
+    document.getElementById('modal-serie').innerText = textoserie;
+    if (esDefecto) modal.classList.add('contenedor-naranja');
+    else modal.classList.remove('contenedor-naranja');
+    
+    modal.style.display = "flex";
+    setTimeout(() => { modal.style.display = "none"; }, 5500);
+}
+
+function guardarEnMemoriaLocal() {
+    localStorage.setItem('historial_bodega_prd', JSON.stringify(historialLecturasPRD));
+}
+
+function limpiarPantallaCompleta() {
+    if(confirm("¿Desea limpiar la sesión actual del panel?\n(Los tiempos guardados en Google Sheets no se borrarán)")) {
+        historialLecturasPRD = [];
+        localStorage.removeItem('historial_bodega_prd');
+        ultimoHitoTime = Date.now();
+        actualizarTablaVista();
+    }
+} 
+
+
+
+// Inicialización de la planta al cargar
+window.onload = function() {
+    actualizarTablaVista();
+    const input = document.getElementById('txt-lector');
+   // if (input) input.focus();
+};
+</script>
+</body>
+</html>
