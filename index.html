@@ -265,7 +265,7 @@
 // 0. IDENTIFICACION DE PUESTO DE TRABAJO
   // Esto lee automáticamente lo que esté después del "?" en la URL
 //const urlParams = new URLSearchParams(window.location.search);
-const idPuesto = "1"; //urlParams.get('puesto') || "No_Definido"; 
+//const idPuesto = "1"; //urlParams.get('puesto') || "No_Definido"; 
 
 // (Opcional) Puedes mostrarlo en pantalla para que el operario sepa en qué puesto está:
 //document.getElementById("nombrePuestoUI").innerText = "Puesto: " + idPuesto;
@@ -366,7 +366,7 @@ function procesarLectura(evento) {
     // ARQUITECTURA DEL OBJETO DE DATOS ASÍNCRONO
 const nuevoRegistro = {
     id: momentoActual,
-    puesto: idPuesto,
+    puesto: "1",
     hora: new Date().toLocaleTimeString('es-ES', { hour:"2-digit",minute:"2-digit", hour12 : false }),
     qr: cadenaQR,
     sku: skuExtraido,
@@ -595,7 +595,7 @@ function alternarPausaLinea() {
         // Estructuramos la pausa de forma idéntica a un SKU de control para la base de datos
         const registroPausa = {
             id: ahora,
-            puesto: idPuesto,
+            puesto: "1",
             hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute:"2-digit", hour12: false }),
             qr: "SISTEMA_PAUSA#TOTAL",
             sku: "PAUSA", // Queda agrupado de forma idéntica
