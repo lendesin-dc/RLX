@@ -218,12 +218,13 @@
     <!-- CONTROL HISTORIAL INTERACTIVO -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 15px;">
-            <h3 style="margin: 0; font-family: sans-serif; font-size: 1.1rem;">Registros</h3>
-            <button id="btn-cambiar-modo" onclick="conmutarModoVista()" style="background-color: #2563eb; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: background 0.2s;">
+            
+            <button id="btn-cambiar-modo" onclick="conmutarModoVista()" style="background-color: #2563eb; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: background 0.2s;">
                  📊 Ver SubTotales
             </button>
         </div>
-        <button id="btn-limpiar-vista" onclick="limpiarPantallaCompleta()" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight:bold; font-size: 1rem;">Limpiar Vista</button>
+        <button id="btn-exportar" onclick="exportar()" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight:bold; font-size: 1.1rem;">Exportar</button>
+        <button id="btn-limpiar-vista" onclick="limpiarPantallaCompleta()" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight:bold; font-size: 1.1rem;">Limpiar Vista</button>
     </div>
 
     <!-- VISOR DE TABLAS PRINCIPALES -->
@@ -265,7 +266,7 @@
 // 0. IDENTIFICACION DE PUESTO DE TRABAJO
   // Esto lee automáticamente lo que esté después del "?" en la URL
 const urlParams = new URLSearchParams(window.location.search);
-const idPuesto = urlParams.get('puesto') || "No_Definido"; 
+const idPuesto = urlParams.get('puesto') || "LINEA_X"; 
 
 // (Opcional) Puedes mostrarlo en pantalla para que el operario sepa en qué puesto está:
 document.getElementById("nombre-linea").innerText = " " + idPuesto;
@@ -291,10 +292,105 @@ let enModoDigitacion = false;
 let lineaEnPausa = false;
 let camaraActivaHardware = false;
 let modoVistaActual = "listado";
+let analisisEnProgreso = false;
+let estaProcesandoCola = false;
 
 // Inicializadores de base de datos local en RAM/Session
 let historialLecturasPRD = JSON.parse(localStorage.getItem('historial_bodega_prd')) || [];
 let ultimoHitoTime = Date.now(); // Estampa del milisegundo exacto del hito anterior
+
+// 2.1 Boton del medio
+async function exportar() {
+    // 1. Traer la base de datos local completa desde el localStorage
+    const datosRaw = localStorage.getItem('historial_bodega_prd');
+    
+    if (!datosRaw || datosRaw === "[]") {
+        alert("No hay registros en el historial local para exportar.");
+        return;
+    }
+
+    const historial = JSON.parse(datosRaw);
+
+    // 2. Extraer dinámicamente los encabezados basados en las propiedades del primer objeto
+    // Esto asegura que si tu objeto tiene {ID, Puesto, Hora...}, el CSV tendrá exactamente esas columnas
+    const encabezados = Object.keys(historial[0]);
+    
+    // Crear la primera línea del CSV (los títulos de las columnas)
+    let filasCSV = [encabezados.join(";")];
+
+    // 3. Recorrer cada registro y armar las filas cuidando que las comas no rompan las celdas
+    historial.forEach(registro => {
+        const valoresFila = encabezados.map(nombreColumna => {
+            let valor = registro[nombreColumna] !== undefined ? registro[nombreColumna] : "";
+            
+            // Si el valor contiene comas, saltos de línea o comillas, lo envolvemos en comillas dobles
+            if (typeof valor === 'string' && (valor.includes(';') || valor.includes('\n') || valor.includes('"'))) {
+                valor = `"${valor.replace(/"/g, '""')}"`;
+            }
+            return valor;
+        });
+        filasCSV.push(valoresFila.join(";"));
+    });
+
+    // 4. Unir todo el texto con saltos de línea
+    const contenidoCSV = filasCSV.join("\n");
+
+    // 5. El truco maestro: Agregar \uFEFF para que MS Excel entienda que es UTF-8 de inmediato
+    const csvConBOM = "\uFEFF" + contenidoCSV;
+
+    // 6. Forzar la descarga física en el almacenamiento de la PDA/Tablet
+    const blob = new Blob([csvConBOM], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.href = url;
+    
+    // Nombre del archivo dinámico con el puesto actual (ej: LINEA_1) y la fecha de hoy
+  
+    const Jahora = new Date(); 
+    const Janio = Jahora.getFullYear();
+    const Jmes = String(Jahora.getMonth() + 1).padStart(2, '0');
+    const Jdia = String(Jahora.getDate()).padStart(2, '0');
+
+    // Reemplazamos los ":" por "-" para que el nombre de archivo sea válido
+    const JhoraFormateada = Jahora.toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
+
+    const JtimestampStr = `${Janio}-${Jmes}-${Jdia}-${JhoraFormateada}`;
+
+    link.download = `Respaldo_${idPuesto}_${JtimestampStr}.xls`;
+        
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    // --- NUEVA LÓGICA: ENVÍO DEL CONTENIDO AL CORREO VÍA WEB APP ---
+
+// Cambiamos 'tablaHtml' por 'datosRaw' enviando el array original de la memoria
+    const payload = {
+        accion: "CORREO",
+        puesto: idPuesto, 
+        fecha: JtimestampStr,
+        datosRaw: historialLecturasPRD // <--- Aquí inyectamos la base de datos real
+        };
+
+
+    try {
+        fetch(URL_GOOGLE_APP, {
+            method: "POST",
+            mode: "cors", 
+            headers: { "Content-Type": "text/plain" },    
+            body: JSON.stringify(payload)
+        });
+        
+        alert("¡Archivo guardado localmente y enviados");
+        
+    } catch (error) {
+        alert("Archivo guardado localmente.");
+        }
+
+}   
+
 
 // 3. CONTROL CENTRAL DE LA INTERFAZ Y PUESTOS (CEREBRO PRD)
 function fijarEstadoCalidad(codigo, boton) {
@@ -367,7 +463,8 @@ function procesarLectura(evento) {
 const nuevoRegistro = {
     id: momentoActual,
     puesto: idPuesto,
-    hora: new Date().toLocaleTimeString('es-ES', { hour:"2-digit",minute:"2-digit", hour12 : false }),
+    dia: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+    hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
     qr: cadenaQR,
     sku: skuExtraido,
     serie: serieExtraida,
@@ -412,7 +509,7 @@ async function simularToggleCamara() {
         apagarCamaraHardware();
         return;
     }
-
+    analisisEnProgreso = false;
     // Levantamos visualmente la ventana del escáner inyectando el visor dinámico si no existe
     let modal = document.getElementById('modal-escaner');
     if (!modal) {
@@ -457,18 +554,22 @@ async function simularToggleCamara() {
 async function analizarCuadroCamara() {
     const video = document.getElementById('video-bodega-stream');
     if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) return;
-
+    if (analisisEnProgreso) return;
     // Si el dispositivo tiene soporte nativo (Android Chrome), procesa de forma acelerada por GPU
     if ('BarcodeDetector' in window) {
         try {
-            const detector = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'ean_13'] });
+            analisisEnProgreso = true;
+            const detector = new BarcodeDetector({ formats: ['qr_code'] });
             const codigos = await detector.detect(video);
             if (codigos.length > 0) {
+                clearInterval(bucleEscaneo);
                 document.getElementById('txt-lector').value = codigos[0].rawValue;
                 apagarCamaraHardware();
                 procesarLectura({ key: 'Enter' }); // Disparador automático
+            } else {
+                analisisEnProgreso = false;
             }
-        } catch (e) { /* Silencio en bucle */ }
+        } catch (e) { analisisEnProgreso = false; /* Silencio cuadro a cuadro */ }
     } else {
         // FALLBACK DISPOSITIVOS DE PLANTA (Si la pistola de lectura es el único canal o usas iOS)
         // El visor se mantendrá abierto permitiendo enfocar el objetivo para el operario
@@ -476,7 +577,7 @@ async function analizarCuadroCamara() {
 }
 
 function apagarCamaraHardware() {
-    clearInterval(window.bucleEscaneo);
+    
     if (streamActivoBodega) {
         streamActivoBodega.getTracks().forEach(track => track.stop());
     }
@@ -596,7 +697,8 @@ function alternarPausaLinea() {
         const registroPausa = {
             id: ahora,
             puesto: idPuesto,
-            hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute:"2-digit", hour12: false }),
+            dia: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+            hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
             qr: "SISTEMA_PAUSA#TOTAL",
             sku: "PAUSA", // Queda agrupado de forma idéntica
             serie: "DETENCION",
@@ -756,39 +858,54 @@ function enviarAGoogleSheets(objetoRegistro) {
 
     fetch(URL_GOOGLE_APP, {
         method: "POST",
-        mode: "cors",
+        mode: "no-cors",
         headers: { "Content-Type": "text/plain" },
         body: JSON.stringify(objetoRegistro)
     })
-    .then(respuesta => respuesta.json())
-    .then(datosNube => {
-        if (datosNube && datosNube.resultado === "ok") {
+   // .then (respuesta => respuesta.json())
+   // .then (datosNube => {
+    .then(() => {     
+        // if (datosNube && datosNube.resultado === "ok") {
             objetoRegistro.sincronizado = true;
             guardarEnMemoriaLocal();
             actualizarTablaVista(); // Cambia el reloj ⏳ por el emoji definitivo 🟢
             console.log("Sincronización exitosa para ID:", objetoRegistro.id);
             
             // TRUCO INDUSTRIAL: Si este envío tuvo éxito, barremos la cola por si había registros antiguos atrapados
+            estaProcesandoCola = false;
             reprocesarColaPendiente();
-        }
+       // }
     })
     .catch(err => {
         console.error("Fallo de red en transmisión asíncrona. Se reintentará luego:", err);
+        estaProcesandoCola = false;
     });
 }
 
 // NUEVA FUNCIÓN: ESCANER DE HISTORIAL PARA IDENTIFICAR REGISTROS ATRAPADOS EN MODO AVIÓN
 function reprocesarColaPendiente() {
-    if (!navigator.onLine) return; // Si no hay internet real, ni lo intentamos
-
-    // Buscamos de atrás hacia adelante (los más antiguos primero) que tengan sincronizado === false
-    const registrosAtrapados = historialLecturasPRD.filter(reg => !reg.sincronizado);
+    if (!navigator.onLine) return; // Sin internet no hacemos nada
     
+    // SI EL SEMÁFORO ESTÁ EN ROJO (true), REBOTAMOS
+    if (estaProcesandoCola) {
+        console.log("🚦 Semáforo en ROJO: Esperando que termine el envío en curso...");
+        return;
+    }
+
+    // Buscamos registros que aún no se hayan sincronizado
+    const registrosAtrapados = historialLecturasPRD.filter(reg => !reg.sincronizado);
+
     if (registrosAtrapados.length > 0) {
-        console.log(`¡Se detectaron ${registrosAtrapados.length} registros en cola! Despachando a Google Sheets...`);
+        // PUSIMOS EL SEMÁFORO EN ROJO (Bloqueo industrial)
+        estaProcesandoCola = true;
         
-        // Enviamos el primero de la cola. Al terminar con éxito, este llamará automáticamente al siguiente
-        enviarAGoogleSheets(registrosAtrapados[registrosAtrapados.length - 1]);
+        console.log(`🚀 Despachando registro pendiente. Quedan ${registrosAtrapados.length} en cola.`);
+
+        // Extraemos el último (siguiendo el flujo natural de tu tabla)
+        const siguienteRegistro = registrosAtrapados[registrosAtrapados.length - 1];
+
+        // Lo mandamos a la red
+        enviarAGoogleSheets(siguienteRegistro);
     }
 }
 
