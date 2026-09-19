@@ -936,6 +936,11 @@ function sonarBip750Hz() {
         
         osc.start();
         osc.stop(miAudioContext.currentTime + 0.25);
+          // EFECTO GURÚ: Hacemos que el celular vibre para avisar al operario con guantes
+        if ('vibrate' in navigator) {
+            navigator.vibrate(120); // Una vibración corta y firme de confirmación
+            }
+
     } catch (e) { console.error("Audio bloqueado por navegador:", e); }
 }
 
