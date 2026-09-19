@@ -237,16 +237,18 @@
 </div>
 
 <!-- VENTANA EMERGENTE GIGANTE: ANUNCIOS DE REVISIÓN -->
-<div id="modal-exito" class="modal-exito">
+<div id="modal-exito" onclick="pantallaVerdePresionada()" class="modal-exito">
+    
     <div style="font-size: 6rem; margin-bottom: 5px;">✅</div>
     <div style="font-size: 2.2rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">Lectura Registrada</div>
     <div id="sku-contenedor-cartel" style="background:rgba(0,0,0,0.2); padding: 20px 40px; border-radius: 12px; margin-top: 15px; min-width: 300px;">
-        <div style="font-size: 1.1rem; opacity: 0.85; margin-bottom: 5px;">SKU PROCESADO:</div>
-        <div id="modal-sku" style="font-size: 2.8rem; font-weight: 900; line-height: 1; word-break: break-all;">-</div>
-        <div style="font-size: 1.1rem; opacity: 0.85; margin-bottom: 5px;">SERIE:</div>
+        <div style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 5px;">OC y PRODUCTO:</div>
+        <div id="modal-orden" style="font-size: 2.5rem; font-weight: 900; padding-bottom: 15px; line-height: 1; word-break: break-all;">-</div>
+        <div id="modal-sku" style="font-size: 2.3rem; font-weight: 900; padding-bottom: 15px; line-height: 1; word-break: break-all;">-</div>
+        <div style="font-size: 1.4rem; opacity: 0.85; margin-bottom: 5px;">SERIE:</div>
         <div id="modal-serie" style="font-size: 2.8rem; font-weight: 900; line-height: 1; word-break: break-all;">-</div>
     </div>
-    <div style="font-size: 1.0rem; margin-top: 30px; opacity: 0.7; font-style: italic;">Continuando en 2 segundos...</div>
+    <div style="font-size: 1.2rem; margin-top: 30px; opacity: 0.7; font-style: italic;">Presione o incline para Escanear</div>
 
 </div>
 
@@ -294,6 +296,12 @@ let camaraActivaHardware = false;
 let modoVistaActual = "listado";
 let analisisEnProgreso = false;
 let estaProcesandoCola = false;
+
+// Constantes globales de logica y calibración (las que probaste en tu medidor)
+const UMBRAL_GOLPE = 7;
+const UMBRAL_INCLINACION = 7;
+let sensoresActivos = false;
+let tiempoInicioSensores = 0;
 
 // Inicializadores de base de datos local en RAM/Session
 let historialLecturasPRD = JSON.parse(localStorage.getItem('historial_bodega_prd')) || [];
@@ -436,9 +444,11 @@ function procesarLectura(evento) {
     const segmentos = cadenaQR.split('#');
     const skuExtraido = segmentos[0] || '-';
     const serieExtraida = segmentos[1] || '-';
-    const loteExtraido = segmentos[2] || '-'; 
-    //const estadoOrdenExtraido = segmentos[2] || seleccionCalidadActiva;
-
+    let loteExtraido = segmentos[2] || '-'; 
+    let estadoOrdenFinal = seleccionCalidadActiva;
+    let destinoDef = "";
+    if ( loteExtraido.length < 3 ) { estadoOrdenFinal = loteExtraido; loteExtraido = ""; }
+    if (seleccionCalidadActiva === "OK") { destinoDef = "B-01" } else { destinoDef = "Z-R"}
     // VERIFICACIÓN DE REPETIDOS (RESTRICCIÓN DE MENOS DE 5 MINUTOS)
     const momentoActual = Date.now();
     const registroDuplicado = historialLecturasPRD.find(item => 
@@ -447,8 +457,8 @@ function procesarLectura(evento) {
 
     if (registroDuplicado) {
         const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
-        if (diferenciaMinutos < 5) {
-            alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada en este puesto hace ${diferenciaMinutos.toFixed(1)} minutos.`);
+        if (diferenciaMinutos < 15) {
+            alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.`);
             input.value = "";
             procesarLectura({ key: 'Enter' });
             return;
@@ -460,27 +470,34 @@ function procesarLectura(evento) {
     ultimoHitoTime = momentoActual; // Reseteo inmediato del hito para el siguiente ciclo
 
     // ARQUITECTURA DEL OBJETO DE DATOS ASÍNCRONO
-const nuevoRegistro = {
-    id: momentoActual,
-    puesto: idPuesto,
-    dia: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-    hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
-    qr: cadenaQR,
-    sku: skuExtraido,
-    serie: serieExtraida,
-    lote: loteExtraido, // <-- INYECTAMOS EL LOTE EN EL OBJETO
-    motivo: seleccionCalidadActiva, 
-    tiempoSegundos: segundosPurosCiclo, 
-    sincronizado: false, 
-    esAnulado: false
-};
+    const nuevoRegistro = {
+        id: momentoActual,  //col A
+        puesto: idPuesto,   //col B 
+        dia: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),  // col C
+        hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),  // col D
+        origen: "B-J",  //col E
+        estadoOrigen: "N", // col F
+        qr: cadenaQR, // col G
+        sku: skuExtraido, // col H
+        serie: serieExtraida, // col I
+        lote: loteExtraido, //  col J
+        estadoFinal: estadoOrdenFinal,   // col K puede ser una letra tipo B-S o un texto tipo fuga, elec comp emb 
+        //motivo: seleccionCalidadActiva, 
+        destino: destinoDef, //col L
+        tiempoSegundos: segundosPurosCiclo,  // col M
+        adicfalla: "-", // col N
+        adicrpto: "-", // col O
+        sincronizado: false,  //col P
+        esAnulado: false  // col Q
+        };
  
     historialLecturasPRD.unshift(nuevoRegistro);
     guardarEnMemoriaLocal();
-
+    // TRANSMISIÓN INMEDIATA A GOOGLE SHEETS
+    enviarAGoogleSheets(nuevoRegistro);
     // EMISIÓN DE AVISOS ACÚSTICOS INDUSTRIALES Y PANTALLA GIGANTE
     sonarBip750Hz();
-    dispararCartelExito(skuExtraido + (seleccionCalidadActiva !== "OK" ? ` (${seleccionCalidadActiva})` : ""), 
+    dispararCartelExito(loteExtraido, skuExtraido + (seleccionCalidadActiva !== "OK" ? ` (${seleccionCalidadActiva})` : ""), 
                         serieExtraida,
                         seleccionCalidadActiva !== "OK");
 
@@ -492,8 +509,6 @@ const nuevoRegistro = {
     actualizarTablaVista();
     input.value = "";
 
-    // TRANSMISIÓN INMEDIATA A GOOGLE SHEETS
-    enviarAGoogleSheets(nuevoRegistro);
 }
 
 // 5. MANEJO NATIVO DE HARDWARE (CÁMARA / DETECTOR)
@@ -576,6 +591,8 @@ async function analizarCuadroCamara() {
     }
 }
 
+
+
 function apagarCamaraHardware() {
     
     if (streamActivoBodega) {
@@ -592,8 +609,7 @@ function apagarCamaraHardware() {
     }
 }
 
-// 6. CONTROL DE MUTACIONES ERGONÓMICAS DE PANTALLA
-// 6. CONTROL DE MUTACIONES ERGONÓMICAS DE LA FRANJA DE HARDWARE
+
 // 6. CONTROL DE MUTACIONES ERGONÓMICAS DE LA FRANJA DE HARDWARE (CON CURSOR GRUESO A LA IZQUIERDA)
 function activarModoDigitacion() {
     if (enModoDigitacion) return;
@@ -699,13 +715,19 @@ function alternarPausaLinea() {
             puesto: idPuesto,
             dia: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
             hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
-            qr: "SISTEMA_PAUSA#TOTAL",
+            origen: "B-J",
+            estadoOrigen: "N",
+            qr: "SISTEMA_PAUSA_TOTAL",
             sku: "PAUSA", // Queda agrupado de forma idéntica
             serie: "DETENCION",
-            motivo: "PAUSA",
+            estadoFinal: "PAUSA",
+            destino: "-",
             tiempoSegundos: segundosPausaMuerta,
+            adicfalla: "-",
+            adicrpto: "-",
             sincronizado: false,
             esAnulado: false
+
         };
 
         historialLecturasPRD.unshift(registroPausa);
@@ -746,8 +768,8 @@ function actualizarTablaVista() {
         thead.innerHTML = `
             <tr>
                 <th style="width: 15%;">Hora</th>
-                <th style="width: 30%;">QR</th>
-                <th style="width: 20%;">Producto</th>
+                <th style="width: 30%;">Producto</th>
+                <th style="width: 20%;">Serie</th>
                 <th style="width: 15%;">Duración</th>
                 <th style="width: 20%; text-align: center;">Estado Nube</th>
             </tr>
@@ -758,25 +780,25 @@ function actualizarTablaVista() {
             const fila = document.createElement('tr');
             
             // Colores suaves de fondo según el tipo de registro
-            if (reg.motivo === "PAUSA") fila.className = "row-pausa-sistema";
-            else if (reg.motivo !== "OK") fila.className = "row-reparar";
+            if (reg.estadoFinal === "PAUSA") fila.className = "row-pausa-sistema";
+            else if (reg.estadoFinal !== "OK") fila.className = "row-reparar";
 
             // LOGICA AUTOMÁTICA DE ESTADO NUBE SOLICITADA
             let celdaEstadoNube = "";
             if (!reg.sincronizado) {
                 // Si está en cola: Texto del estado + Reloj parpadeando
-                celdaEstadoNube = `<span class="sincro-espera" style="font-size: 1.1rem; font-weight: bold; color: #ca8a04;">${reg.motivo} ⏳</span>`;
+                celdaEstadoNube = `<span class="sincro-espera" style="font-size: 1.1rem; font-weight: bold; color: #ca8a04;">${reg.estadoFinal} ⏳</span>`;
             } else {
                 // Si ya está en la nube: Texto del estado + Su emoji correspondiente fijado
-                const emojiDefinitivo = MAPA_ICONOS[reg.motivo] || "✔️";
-                celdaEstadoNube = `<span style="font-size: 1.1rem; font-weight: bold; color: #1e293b;">${reg.motivo} ${emojiDefinitivo}</span>`;
+                const emojiDefinitivo = MAPA_ICONOS[reg.estadoFinal] || "✔️";
+                celdaEstadoNube = `<span style="font-size: 1.1rem; font-weight: bold; color: #1e293b;">${reg.estadoFinal} ${emojiDefinitivo}</span>`;
             }
 
             // Inyección de celdas con tipografía grande para operario y chica para el QR
             fila.innerHTML = `
                 <td style="font-size: 1.0rem; font-weight: bold; color: #1e293b;">${reg.hora}</td>
-                <td style="color: #64748b; font-size: 0.72rem; font-family: monospace; line-height: 1.2; word-break: break-all; white-space: normal;">${reg.qr}</td>
-                <td style="font-size: 1.1rem; font-weight: 900; color: #1e3a8a; letter-spacing: 0.3px;">${reg.sku}</td>
+                <td style="font-size: 1.1rem; font-weight: 900; color: #2e3a8a: letter-spacing: 0.3px;">${reg.sku}</td>
+                <td style="font-size: 1.1rem; font-weight: 900; color: #1e3a8a; letter-spacing: 0.3px;">${reg.serie}</td>
                 <td style="font-size: 1.1rem; font-weight: bold; color: #2563eb;">⏱️ ${reg.tiempoSegundos}s</td>
                 <td style="text-align: center; border-left: 1px solid #e2e8f0; background: #f8fafc;">${celdaEstadoNube}</td>
             `;
@@ -936,23 +958,113 @@ function sonarBip750Hz() {
         
         osc.start();
         osc.stop(miAudioContext.currentTime + 0.25);
+
           // EFECTO GURÚ: Hacemos que el celular vibre para avisar al operario con guantes
         if ('vibrate' in navigator) {
             navigator.vibrate(120); // Una vibración corta y firme de confirmación
-            }
+        }
 
     } catch (e) { console.error("Audio bloqueado por navegador:", e); }
 }
 
-function dispararCartelExito(textosku, textoserie, esDefecto) {
+function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
     const modal = document.getElementById('modal-exito');
+    document.getElementById('modal-orden').innerText = textoorden;
     document.getElementById('modal-sku').innerText = textosku;
     document.getElementById('modal-serie').innerText = textoserie;
     if (esDefecto) modal.classList.add('contenedor-naranja');
     else modal.classList.remove('contenedor-naranja');
     
     modal.style.display = "flex";
-    setTimeout(() => { modal.style.display = "none"; }, 5500);
+    
+    // Activamos los sensores justo cuando aparece el modal gigante
+    // Guardamos el milisegundo exacto en el que se activa la pantalla verde
+    tiempoInicioSensores = Date.now();
+    sensoresActivos = false;
+// BLOQUE DE PROTECCIÓN INDUSTRIAL DE SENSORES
+    try {
+        // 1. Verificamos si las APIs existen nativamente en el navegador de este celular
+        const tieneOrientacion = ('DeviceOrientationEvent' in window) && (window.DeviceOrientationEvent !== null);
+        const tieneMovimiento = ('DeviceMotionEvent' in window) && (window.DeviceMotionEvent !== null);
+
+        if (tieneOrientacion || tieneMovimiento) {
+            // 2. Solo si el hardware es compatible, intentamos encender los escuchas
+            if (tieneOrientacion) {
+                window.addEventListener('deviceorientation', manejarInclinacionOperario, false);
+            }
+            if (tieneMovimiento) {
+                window.addEventListener('devicemotion', manejarGolpeOperario, false);
+            }
+            
+            // 3. Pasamos a true ÚNICAMENTE cuando la asignación fue exitosa
+            sensoresActivos = true;
+            console.log("Sensores activados con éxito para guantes.");
+        } else {
+            console.warn("Este dispositivo no cuenta con hardware de movimiento. Operación solo por pantalla táctil.");
+        }
+
+    } catch (error) {
+        // Si hay una restricción de permisos del navegador o error inesperado, forzamos el apagado
+        sensoresActivos = false;
+        console.error("Error crítico al inicializar sensores, fallback a pantalla activa:", error);
+        setTimeout(() => { modal.style.display = "none"; }, 1500);
+    }
+
+
+
+}
+
+// --- CAPTURADORES DE SENSORES (Simulan el toque de pantalla) ---
+
+function manejarInclinacionOperario(event) {
+    if (!sensoresActivos) return;
+
+    // ESCUDO DE ESTABILIDAD: Si no han pasado al menos 200ms desde que se abrió el modal,
+    // ignoramos la lectura. Esto evita que el "despertar" ruidoso del sensor mienta.
+    if (Date.now() - tiempoInicioSensores < 1200) return;
+
+    const inclFrontal = Math.abs(event.beta);
+    const inclLateral = Math.abs(event.gamma);
+
+    if (inclFrontal > UMBRAL_INCLINACION || inclLateral > UMBRAL_INCLINACION) {
+        console.log("Activado por inclinación física estable.");
+        pantallaVerdePresionada();
+    }
+}
+
+function manejarGolpeOperario(event) {
+    if (!sensoresActivos) return; // Si ya se apagaron, ignorar
+
+    if (Date.now() - tiempoInicioSensores < 1200) return;
+
+    const acc = event.accelerationIncludingGravity;
+    if (!acc) return;
+
+    const fuerzaZpura = Math.abs(acc.z - 9.8);
+
+    // Si da un golpe seco en el marco o mesa superando tu umbral de 6
+    if (fuerzaZpura > UMBRAL_GOLPE) {
+        console.log("Activado por golpe seco en Z (Guantes puestos)");
+        pantallaVerdePresionada(); // Dispara tu evento original
+    }
+}
+
+
+function pantallaVerdePresionada() {
+    // 0. APAGADO QUIRÚRGICO: Lo primero es matar los sensores para liberar CPU inmediatamente
+    if (sensoresActivos) {
+        sensoresActivos = false;
+        window.removeEventListener('deviceorientation', manejarInclinacionOperario);
+        window.removeEventListener('devicemotion', manejarGolpeOperario);
+        console.log("Sensores removidos limpiamente. CPU liberada para la cámara.");
+    }
+
+    // 1. Escondemos el cartel de éxito
+    document.getElementById('modal-exito').style.display = "none";
+
+    // 2. LLAMAMOS AL ENCENDIDO ORIGINAL (Levanta el hardware de cero de forma limpia)
+   // encenderCamaraBodega(); 
+    simularToggleCamara()
 }
 
 function guardarEnMemoriaLocal() {
