@@ -1117,7 +1117,7 @@ function avanzarSecuenciaPorHardware() {
             // pero para nuestra secuencia, el nuevo estado pasa a ser la cámara:
             break;
 
-        case "CAMARA_NEGRA":
+        case "CAMARA_NEGRA1":
             // El operario está en el contenedor negro gigante con la cámara abierta.
             // Si mueve/inclina antes de leer un QR, significa que quiere CANCELAR e ir a la botonera.
             console.log("Cancelando escaneo activo por movimiento -> Volviendo a Botonera");
@@ -1152,10 +1152,8 @@ function apagadoSensores() {
 function pantallaVerdePresionada() {
     // 1. Escondemos el cartel de éxito
     document.getElementById('modal-exito').style.display = "none";
-
-    // 2. LLAMAMOS AL ENCENDIDO ORIGINAL (Levanta el hardware de cero de forma limpia)
-   // encenderCamaraBodega(); 
-    simularToggleCamara()
+    // 2. LLAMAMOS AL ENCENDIDO ORIGINAL (Levanta el hardware de cero de forma limpia
+    simularToggleCamara();
 }
 
 function guardarEnMemoriaLocal() {
