@@ -1081,9 +1081,9 @@ function manejarInclinacionOperario(event) {
 }
 
 function manejarGolpeOperario(event) {
-    if (!sensoresActivos) return; // Si ya se apagaron, ignorar
+    if (!sensoresActivos) { activarSensores(); return; } // Si ya se apagaron, ignorar
 
-    if (Date.now() - tiempoInicioSensores < 1200) return;
+    if (Date.now() - tiempoInicioSensores < 800) return;
 
     const acc = event.accelerationIncludingGravity;
     if (!acc) return;
