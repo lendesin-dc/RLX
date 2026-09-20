@@ -1073,7 +1073,7 @@ function manejarInclinacionOperario(event) {
 
     const inclFrontal = Math.abs(event.beta);
     const inclLateral = Math.abs(event.gamma);
-
+    if ( estadoSecuenciaActual === "CAMARA_NEGRA" ) { return; }
     if (inclFrontal > UMBRAL_INCLINACION || inclLateral > UMBRAL_INCLINACION) {
         console.log("Activado por inclinación física estable.");
         apagadoSensores();
