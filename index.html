@@ -597,7 +597,8 @@ async function simularToggleCamara() {
 
     
     camaraActivaHardware = true;
-
+    estadoSecuenciaActual = "CAMARA_NEGRA";
+    activarSensores();
     // Encendido del hardware físico (Lente Trasero "environment" a alta resolución)
     try {
         streamActivoBodega = await navigator.mediaDevices.getUserMedia({
@@ -613,7 +614,7 @@ async function simularToggleCamara() {
         alert("Acceso al hardware bloqueado. Asegúrese de dar permisos de cámara en la barra de direcciones HTTPS.");
         apagarCamaraHardware();
     }
-    estadoSecuenciaActual = "CAMARA_NEGRA";
+    
 }
 
 // Bucle analizador compatible cross-platform
