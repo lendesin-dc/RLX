@@ -360,6 +360,7 @@ let estaProcesandoCola = false;
 // Constantes globales de logica y calibración (las que probaste en tu medidor)
 const UMBRAL_GOLPE = 7;
 const UMBRAL_INCLINACION = 7;
+
 let sensoresActivos = false;
 let tiempoInicioSensores = 0;
 // Valores posibles: "EXITO_VERDE", "CAMARA_NEGRA", "BOTONERA"
@@ -369,7 +370,6 @@ let ultimoMovimientoTiempo = 0;
 // Inicializadores de base de datos local en RAM/Session
 let historialLecturasPRD = JSON.parse(localStorage.getItem('historial_bodega_prd')) || [];
 let ultimoHitoTime = Date.now(); // Estampa del milisegundo exacto del hito anterior
-
 
 
 // 2.1 Boton del medio
@@ -446,8 +446,6 @@ async function exportar() {
         fecha: JtimestampStr,
         datosRaw: historialLecturasPRD // <--- Aquí inyectamos la base de datos real
         };
-
-
     try {
         fetch(URL_GOOGLE_APP, {
             method: "POST",
@@ -455,13 +453,14 @@ async function exportar() {
             headers: { "Content-Type": "text/plain" },    
             body: JSON.stringify(payload)
         });
-        
+      
         alert("¡Archivo guardado localmente y enviados");
-        
+      
     } catch (error) {
         alert("Archivo guardado localmente.");
         }
 }   
+
 
 // 3. CONTROL CENTRAL DE LA INTERFAZ Y PUESTOS (CEREBRO PRD)
 function fijarEstadoCalidad(codigo, boton) {
@@ -476,8 +475,6 @@ function fijarEstadoCalidad(codigo, boton) {
         boton.classList.add('pareto-active');
     }
     console.log("Estado seleccionado listo para captura:", seleccionCalidadActiva);
-    estadoSecuenciaActual = "BOTONERA";
-    activarSensores();
 }
 
 // 4. PROCESADOR DE ENTRADA CENTRAL DE DATOS (BACKOFFICE DE LECTURA)
@@ -597,8 +594,7 @@ async function simularToggleCamara() {
 
     
     camaraActivaHardware = true;
-    estadoSecuenciaActual = "CAMARA_NEGRA";
-    activarSensores();
+
     // Encendido del hardware físico (Lente Trasero "environment" a alta resolución)
     try {
         streamActivoBodega = await navigator.mediaDevices.getUserMedia({
@@ -614,7 +610,7 @@ async function simularToggleCamara() {
         alert("Acceso al hardware bloqueado. Asegúrese de dar permisos de cámara en la barra de direcciones HTTPS.");
         apagarCamaraHardware();
     }
-    
+    estadoSecuenciaActual = "CAMARA_NEGRA";
 }
 
 // Bucle analizador compatible cross-platform
@@ -656,6 +652,7 @@ function apagarCamaraHardware() {
     if (document.getElementById('txt-lector').value.trim() === "") {
         procesarLectura({ key: 'Enter' });
     }
+    estadoSecuenciaActual = "BOTONERA";
 }
 
 // 6. CONTROL DE MUTACIONES ERGONÓMICAS DE LA FRANJA DE HARDWARE (CON CURSOR GRUESO A LA IZQUIERDA)
@@ -724,7 +721,6 @@ function restaurarBotoneraInferior() {
     }
 }
 
-//quizas deba borrarlo
 
 function gestionarBotonDinamico() {
     if (enModoDigitacion) {
@@ -916,9 +912,6 @@ function actualizarTablaVista() {
 
 }
 
-
-// 9. MOTOR ASÍNCRONO DE TRANSMISIÓN (BACKOFFICE DE DATOS GOOGLE)
-
 // 9. MOTOR ASÍNCRONO DE TRANSMISIÓN CON REINTENTO AUTOMÁTICO DE COLA
 function enviarAGoogleSheets(objetoRegistro) {
     if (!navigator.onLine) {
@@ -985,9 +978,6 @@ window.addEventListener('online', () => {
     reprocesarColaPendiente();
 });
 
-
-
-
 // 10. UTILIDADES INDUSTRIALES (AUDIO Y LIMPIEZA)
 let miAudioContext = null;
 function sonarBip750Hz() {
@@ -1027,26 +1017,15 @@ function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
     
     // Activamos los sensores justo cuando aparece el modal gigante
     // Guardamos el milisegundo exacto en el que se activa la pantalla verde
+    tiempoInicioSensores = Date.now();
+    sensoresActivos = false;
     estadoSecuenciaActual = "EXITO_VERDE";
 // BLOQUE DE PROTECCIÓN INDUSTRIAL DE SENSORES
     try {
         // 1. Verificamos si las APIs existen nativamente en el navegador de este celular
-        activarSensores();
-
-    } catch (error) {
-        // Si hay una restricción de permisos del navegador o error inesperado, forzamos el apagado
-        sensoresActivos = false;
-        console.error("Error crítico al inicializar sensores, fallback a pantalla activa:", error);
-    }
-
-}
-
-// --- CAPTURADORES DE SENSORES (Simulan el toque de pantalla) ---
-function activarSensores() {
         const tieneOrientacion = ('DeviceOrientationEvent' in window) && (window.DeviceOrientationEvent !== null);
         const tieneMovimiento = ('DeviceMotionEvent' in window) && (window.DeviceMotionEvent !== null);
-        tiempoInicioSensores = Date.now();
-        sensoresActivos = false;
+
         if (tieneOrientacion || tieneMovimiento) {
             // 2. Solo si el hardware es compatible, intentamos encender los escuchas
             if (tieneOrientacion) {
@@ -1055,35 +1034,44 @@ function activarSensores() {
             if (tieneMovimiento) {
                 window.addEventListener('devicemotion', manejarGolpeOperario, false);
             }
+            
             // 3. Pasamos a true ÚNICAMENTE cuando la asignación fue exitosa
             sensoresActivos = true;
             console.log("Sensores activados con éxito para guantes.");
         } else {
             console.warn("Este dispositivo no cuenta con hardware de movimiento. Operación solo por pantalla táctil.");
         }
+
+    } catch (error) {
+        // Si hay una restricción de permisos del navegador o error inesperado, forzamos el apagado
+        sensoresActivos = false;
+        console.error("Error crítico al inicializar sensores, fallback a pantalla activa:", error);
+        setTimeout(() => { modal.style.display = "none"; }, 1500);
+    }
 }
+
+// --- CAPTURADORES DE SENSORES (Simulan el toque de pantalla) ---
 
 function manejarInclinacionOperario(event) {
     if (!sensoresActivos) return;
 
     // ESCUDO DE ESTABILIDAD: Si no han pasado al menos 200ms desde que se abrió el modal,
     // ignoramos la lectura. Esto evita que el "despertar" ruidoso del sensor mienta.
-    if (Date.now() - tiempoInicioSensores < 800) return;
+    if (Date.now() - tiempoInicioSensores < 1200) return;
 
     const inclFrontal = Math.abs(event.beta);
     const inclLateral = Math.abs(event.gamma);
-    if ( estadoSecuenciaActual === "CAMARA_NEGRA" ) { return; }
+
     if (inclFrontal > UMBRAL_INCLINACION || inclLateral > UMBRAL_INCLINACION) {
         console.log("Activado por inclinación física estable.");
-        apagadoSensores();
-        avanzarSecuenciaPorHardware();
+        pantallaVerdePresionada();
     }
 }
 
 function manejarGolpeOperario(event) {
-    if (!sensoresActivos) { activarSensores(); return; } // Si ya se apagaron, ignorar
+    if (!sensoresActivos) return; // Si ya se apagaron, ignorar
 
-    if (Date.now() - tiempoInicioSensores < 800) return;
+    if (Date.now() - tiempoInicioSensores < 1200) return;
 
     const acc = event.accelerationIncludingGravity;
     if (!acc) return;
@@ -1093,67 +1081,26 @@ function manejarGolpeOperario(event) {
     // Si da un golpe seco en el marco o mesa superando tu umbral de 6
     if (fuerzaZpura > UMBRAL_GOLPE) {
         console.log("Activado por golpe seco en Z (Guantes puestos)");
-        apagadoSensores();
-        avanzarSecuenciaPorHardware(); // Dispara tu evento original
+        pantallaVerdePresionada(); // Dispara tu evento original
     }
 }
 
-function avanzarSecuenciaPorHardware() {
-    // Retroalimentación instantánea estilo Gurú
-    if ('vibrate' in navigator) navigator.vibrate(100);
-    console.log(`🔄 Movimiento detectado. Estado actual: ${estadoSecuenciaActual}`);
 
-    switch (estadoSecuenciaActual) {
-        
-        case "EXITO_VERDE":
-            // El operario está viendo el cartel verde gigante de éxito.
-            // Al mover/inclinar, avanzamos directo al siguiente escaneo.
-            console.log("Avanzando de Éxito Verde a Siguiente Escaneo");
-            // Reutilizamos tu función táctil existente (que apaga sensores temporales y limpia)
-            estadoSecuenciaActual = "CAMARA_NEGRA";
-            pantallaVerdePresionada(); 
-            
-            // La función 'pantallaVerdePresionada' internamente llama a encender la cámara,
-            // pero para nuestra secuencia, el nuevo estado pasa a ser la cámara:
-            break;
-
-        case "CAMARA_NEGRA1":
-            // El operario está en el contenedor negro gigante con la cámara abierta.
-            // Si mueve/inclina antes de leer un QR, significa que quiere CANCELAR e ir a la botonera.
-            console.log("Cancelando escaneo activo por movimiento -> Volviendo a Botonera");
-            // Reutilizamos tu función existente del botón rojo de cancelar
-            estadoSecuenciaActual = "BOTONERA";
-            apagarCamaraHardware(); 
-         
-            break;
-
-        case "BOTONERA1":
-            // El operario está en la pantalla principal/botonera limpia.
-            // Al mover/inclinar, el teléfono entiende que quiere iniciar un escaneo rápido en ráfaga.
-            console.log("Iniciando escaneo desde Botonera por movimiento");
-            
-            // Llamamos a tu función de apertura con la calidad que esté preseleccionada
-            estadoSecuenciaActual = "CAMARA_NEGRA";
-            simularToggleCamara();
-            
-            break;
-    }
-}
-
-function apagadoSensores() {
+function pantallaVerdePresionada() {
+    // 0. APAGADO QUIRÚRGICO: Lo primero es matar los sensores para liberar CPU inmediatamente
     if (sensoresActivos) {
         sensoresActivos = false;
         window.removeEventListener('deviceorientation', manejarInclinacionOperario);
         window.removeEventListener('devicemotion', manejarGolpeOperario);
         console.log("Sensores removidos limpiamente. CPU liberada para la cámara.");
     }
-}
 
-function pantallaVerdePresionada() {
     // 1. Escondemos el cartel de éxito
     document.getElementById('modal-exito').style.display = "none";
-    // 2. LLAMAMOS AL ENCENDIDO ORIGINAL (Levanta el hardware de cero de forma limpia
-    simularToggleCamara();
+
+    // 2. LLAMAMOS AL ENCENDIDO ORIGINAL (Levanta el hardware de cero de forma limpia)
+   // encenderCamaraBodega(); 
+    simularToggleCamara()
 }
 
 function guardarEnMemoriaLocal() {
@@ -1173,7 +1120,6 @@ function limpiarPantallaCompleta() {
 window.onload = function() {
     actualizarTablaVista();
     const input = document.getElementById('txt-lector');
-    activarSensores();
    // if (input) input.focus();
 };
 </script>
