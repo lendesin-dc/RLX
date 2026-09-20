@@ -679,6 +679,7 @@ async function simularToggleCamara() {
         apagarCamaraHardware();
     }
     estadoSecuenciaActual = "CAMARA_NEGRA";
+    esperarAccionBotonera();
 }
 
 // Bucle analizador compatible cross-platform
@@ -723,6 +724,7 @@ function apagarCamaraHardware() {
         procesarLectura({ key: 'Enter' });
     }
     estadoSecuenciaActual = "BOTONERA";
+    esperarAccionBotonera();
 }
 
 
@@ -1092,7 +1094,7 @@ function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
     else modal.classList.remove('contenedor-naranja');
     
     modal.style.display = "flex";
- 
+esperarAccionBotonera(); 
 estadoSecuenciaActual = "EXITO_VERDE";
 
 }
@@ -1117,10 +1119,30 @@ function limpiarPantallaCompleta() {
     }
 } 
 
+// Función explícita para activar sensores en modo de espera
+function esperarAccionBotonera() {
+    estadoSecuenciaActual = "BOTONERA";
+    
+    // Forzamos el encendido quirúrgico de los sensores para la botonera
+    try {
+        // Removemos primero por seguridad para no duplicar escuchas en la RAM
+        window.removeEventListener('deviceorientation', procesarMovimientoSecuencia);
+        
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', procesarMovimientoSecuencia, false);
+            console.log("Sensores ACTIVADOS: Esperando acción o botón en la botonera.");
+        }
+    } catch (error) {
+        console.error("No se pudieron activar los sensores en la botonera:", error);
+    }
+}
+
+    
 // Inicialización de la planta al cargar
 window.onload = function() {
     actualizarTablaVista();
     const input = document.getElementById('txt-lector');
+    esperarAccionBotonera();
    // if (input) input.focus();
 };
 </script>
