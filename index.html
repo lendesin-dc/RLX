@@ -27,7 +27,7 @@
         }
 
         .contenedor { 
-            max-width: 750px; 
+            max-width: 700px; 
             margin: 0 auto; 
             background: white; 
             padding: 8px; 
@@ -145,7 +145,7 @@
 
         /* TABLA DE REGISTROS */
         .tabla-contenedor { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 6px; margin-top: 5px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 650px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 630px; }
         th { background: #212529; color: white; padding: 9px 3px; text-transform: uppercase; font-size: 12px; }
         td { padding: 8px 4px; border-bottom: 1px solid #dee2e6; }
         tr.row-reparar { background-color: #fff7ed !important; }
@@ -236,10 +236,70 @@
     </div>
 </div>
 
+<!-- Modal Gigante para el Modo Escaneo -->
+<div id="modal-escaneo-gigante" style="
+    display: none; /* Inicia oculto */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9); /* Fondo ligero trasluz */
+    z-index: 99999; /* Por encima de absolutamente todo */
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* Distribuye arriba, al medio y abajo */
+    padding-top: 40px;
+    box-sizing: border-box;
+">
+    <!-- ARRIBA: Cartel Dinámico de Selección Activa -->
+    <div id="escaneo-cartel-superior" style="
+        background: #1c3545; 
+        color: white; 
+        padding: 14px 40px;
+        margin-bottom: 40px;    
+        border-radius: 6px; 
+        font-weight: bold; 
+        font-size: 1.5rem; /* Más grande para legibilidad del operario */
+        text-transform: uppercase;
+        box-shadow: 0 4px 15px rgba(255,255,255,0.1);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    ">
+        <!-- Se llena dinámicamente mediante JS -->
+    </div>
+
+    <!-- AL MEDIO: Tu contenedor de cámara actual -->
+    <div style="width:320px; height:320px; border:4px dashed #0d6efd; border-radius:12px; overflow:hidden; background:#000; position:relative;">
+        
+        <video video id="video-bodega-stream" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+        <div style="position:absolute; top:50%; left:10%; width:80%; height:2px; background:rgba(255,0,0,0.8); box-shadow:0 0 4px #ff0000; pointer-events:none;"></div>
+        
+    </div>
+
+    <!-- ABAJO: El botón de cancelar que ya tenías -->
+    <button onclick="apagarCamaraHardware()" style="
+        width: 100%; 
+        max-width: 400px; 
+        padding: 18px; 
+        background: #dc3545; 
+        color: white; 
+        border: none;
+        margin-top:40px; 
+        border-radius: 8px; 
+        font-size: 1.5rem; 
+        font-weight: bold; 
+        cursor: pointer;
+    ">
+        ✕ Cancelar Escaneo
+    </button>
+</div>
+
 <!-- VENTANA EMERGENTE GIGANTE: ANUNCIOS DE REVISIÓN -->
 <div id="modal-exito" onclick="pantallaVerdePresionada()" class="modal-exito">
     
-    <div style="font-size: 6rem; margin-bottom: 5px;">✅</div>
+    <div style="font-size: 5rem; margin-bottom: 5px;">✅</div>
     <div style="font-size: 2.2rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase;">Lectura Registrada</div>
     <div id="sku-contenedor-cartel" style="background:rgba(0,0,0,0.2); padding: 20px 40px; border-radius: 12px; margin-top: 15px; min-width: 300px;">
         <div style="font-size: 1.2rem; opacity: 0.85; margin-bottom: 5px;">OC y PRODUCTO:</div>
@@ -302,10 +362,82 @@ const UMBRAL_GOLPE = 7;
 const UMBRAL_INCLINACION = 7;
 let sensoresActivos = false;
 let tiempoInicioSensores = 0;
+// Valores posibles: "EXITO_VERDE", "CAMARA_NEGRA", "BOTONERA"
+let estadoSecuenciaActual = "BOTONERA"; 
+let ultimoMovimientoTiempo = 0;
 
 // Inicializadores de base de datos local en RAM/Session
 let historialLecturasPRD = JSON.parse(localStorage.getItem('historial_bodega_prd')) || [];
 let ultimoHitoTime = Date.now(); // Estampa del milisegundo exacto del hito anterior
+
+// --- ESCUCHA DE SENSORES UNIFICADA ---
+if (window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', procesarMovimientoSecuencia, false);
+}
+
+function procesarMovimientoSecuencia(event) {
+    // 1. Filtro Anti-PC y validación inicial
+    if (event.beta === null || event.gamma === null) return;
+
+    const inclFrontal = Math.abs(event.beta);
+    const inclLateral = Math.abs(event.gamma);
+
+    // 2. Evaluamos si el movimiento supera tu umbral de 6
+    if (inclFrontal > UMBRAL_MOVIMIENTO || inclLateral > UMBRAL_MOVIMIENTO) {
+        const ahora = Date.now();
+        
+        // Freno de rebote (debounce) de 1 segundo para evitar saltos dobles accidentales
+        if (ahora - ultimoMovimientoTiempo > 1000) { 
+            ultimoMovimientoTiempo = ahora;
+            avanzarSecuenciaPorHardware();
+        }
+    }
+}
+
+// --- EL CEREBRO DEL "IR Y VOLVER" ---
+function avanzarSecuenciaPorHardware() {
+    // Retroalimentación instantánea estilo Gurú
+    if ('vibrate' in navigator) navigator.vibrate(100);
+    console.log(`🔄 Movimiento detectado. Estado actual: ${estadoSecuenciaActual}`);
+
+    switch (estadoSecuenciaActual) {
+        
+        case "EXITO_VERDE":
+            // El operario está viendo el cartel verde gigante de éxito.
+            // Al mover/inclinar, avanzamos directo al siguiente escaneo.
+            console.log("Avanzando de Éxito Verde a Siguiente Escaneo");
+            
+            // Reutilizamos tu función táctil existente (que apaga sensores temporales y limpia)
+            pantallaVerdePresionada(); 
+            
+            // La función 'pantallaVerdePresionada' internamente llama a encender la cámara,
+            // pero para nuestra secuencia, el nuevo estado pasa a ser la cámara:
+            estadoSecuenciaActual = "CAMARA_NEGRA";
+            break;
+
+        case "CAMARA_NEGRA":
+            // El operario está en el contenedor negro gigante con la cámara abierta.
+            // Si mueve/inclina antes de leer un QR, significa que quiere CANCELAR e ir a la botonera.
+            console.log("Cancelando escaneo activo por movimiento -> Volviendo a Botonera");
+            
+            // Reutilizamos tu función existente del botón rojo de cancelar
+            apagarCamaraHardware(); 
+            
+            estadoSecuenciaActual = "BOTONERA";
+            break;
+
+        case "BOTONERA":
+            // El operario está en la pantalla principal/botonera limpia.
+            // Al mover/inclinar, el teléfono entiende que quiere iniciar un escaneo rápido en ráfaga.
+            console.log("Iniciando escaneo desde Botonera por movimiento");
+            
+            // Llamamos a tu función de apertura con la calidad que esté preseleccionada
+            simularToggleCamara();
+            
+            estadoSecuenciaActual = "CAMARA_NEGRA";
+            break;
+    }
+}
 
 // 2.1 Boton del medio
 async function exportar() {
@@ -520,32 +652,17 @@ async function simularToggleCamara() {
     estadoCalidadPrevio = seleccionCalidadActiva;
     
     // Si la cámara ya está activa, el botón actúa para apagarla (Cancelar)
-    if (camaraActivaHardware) {
-        apagarCamaraHardware();
-        return;
-    }
+   // if (camaraActivaHardware) {
+   //     apagarCamaraHardware();
+   //     return;
+   // }
     analisisEnProgreso = false;
     // Levantamos visualmente la ventana del escáner inyectando el visor dinámico si no existe
-    let modal = document.getElementById('modal-escaner');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'modal-escaner';
-        
+    document.getElementById('escaneo-cartel-superior').innerHTML = `<span>${seleccionCalidadActiva}</span> <span>${
+        MAPA_ICONOS[seleccionCalidadActiva]}</span>`;
+    document.getElementById('modal-escaneo-gigante').style.display = "flex";
 
-        // MODIFICACIÓN ERGONÓMICA: Subir el visor de la cámara al tercio superior
-        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; display:flex; align-items:center; justify-content:flex-start; flex-direction:column; padding-top:40px; box-sizing:border-box;";
-   //   modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; display:flex; align-items:center; justify-content:center; flex-direction:column;";
-        modal.innerHTML = `
-            <div style="width:320px; height:320px; border:4px dashed #0d6efd; border-radius:12px; overflow:hidden; background:#000; position:relative;">
-                <video id="video-bodega-stream" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
-                <div style="position:absolute; top:50%; left:10%; width:80%; height:2px; background:rgba(255,0,0,0.8); box-shadow:0 0 4px #ff0000; pointer-events:none;"></div>
-            </div>
-            <button onclick="apagarCamaraHardware()" style="margin-top:25px; padding:14px 30px; background:#dc3545; color:white; border:none; border-radius:6px; font-weight:bold; font-size:16px; cursor:pointer;">❌ Cancelar Escaneo</button>
-        `;
-        document.body.appendChild(modal);
-    }
-
-    modal.style.display = "flex";
+    
     camaraActivaHardware = true;
 
     // Encendido del hardware físico (Lente Trasero "environment" a alta resolución)
@@ -563,6 +680,7 @@ async function simularToggleCamara() {
         alert("Acceso al hardware bloqueado. Asegúrese de dar permisos de cámara en la barra de direcciones HTTPS.");
         apagarCamaraHardware();
     }
+    estadoSecuenciaActual = "CAMARA_NEGRA";
 }
 
 // Bucle analizador compatible cross-platform
@@ -598,15 +716,34 @@ function apagarCamaraHardware() {
     if (streamActivoBodega) {
         streamActivoBodega.getTracks().forEach(track => track.stop());
     }
-    const modal = document.getElementById('modal-escaner');
-    if (modal) modal.style.display = "none";
-    
+
+    document.getElementById('modal-escaneo-gigante').style.display = "none";
     camaraActivaHardware = false;
     
     // Si se cerró sin lectura, procesa la excepción vacía para retornar los botones al estado inicial
     if (document.getElementById('txt-lector').value.trim() === "") {
         procesarLectura({ key: 'Enter' });
     }
+    estadoSecuenciaActual = "BOTONERA";
+}
+
+function apagarCamaraHardware2() {
+    fijarEstadoCalidad('OK', document.getElementById('btn-ok-base'));
+    estadoCalidadPrevio = "OK";
+    seleccionCalidadActiva = "OK";     
+    if (streamActivoBodega) {
+        streamActivoBodega.getTracks().forEach(track => track.stop());
+    }
+    const modal = document.getElementById('modal-escaner');
+    if (modal) modal.style.display = "none";
+    
+    camaraActivaHardware = false;
+    
+    // Si se cerró sin lectura, procesa la excepción vacía para retornar los botones al estado inicial
+  //  if (document.getElementById('txt-lector').value.trim() === "") {
+  //      procesarLectura({ key: 'Enter' });
+  //  }
+    
 }
 
 
@@ -1010,7 +1147,7 @@ function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
         setTimeout(() => { modal.style.display = "none"; }, 1500);
     }
 
-
+estadoSecuenciaActual = "EXITO_VERDE";
 
 }
 
