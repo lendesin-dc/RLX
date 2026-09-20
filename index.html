@@ -505,7 +505,6 @@ async function exportar() {
     URL.revokeObjectURL(url);
 
     // --- NUEVA LÓGICA: ENVÍO DEL CONTENIDO AL CORREO VÍA WEB APP ---
-
 // Cambiamos 'tablaHtml' por 'datosRaw' enviando el array original de la memoria
     const payload = {
         accion: "CORREO",
@@ -513,7 +512,6 @@ async function exportar() {
         fecha: JtimestampStr,
         datosRaw: historialLecturasPRD // <--- Aquí inyectamos la base de datos real
         };
-
 
     try {
         fetch(URL_GOOGLE_APP, {
@@ -528,7 +526,6 @@ async function exportar() {
     } catch (error) {
         alert("Archivo guardado localmente.");
         }
-
 }   
 
 
@@ -725,25 +722,6 @@ function apagarCamaraHardware() {
         procesarLectura({ key: 'Enter' });
     }
     estadoSecuenciaActual = "BOTONERA";
-}
-
-function apagarCamaraHardware2() {
-    fijarEstadoCalidad('OK', document.getElementById('btn-ok-base'));
-    estadoCalidadPrevio = "OK";
-    seleccionCalidadActiva = "OK";     
-    if (streamActivoBodega) {
-        streamActivoBodega.getTracks().forEach(track => track.stop());
-    }
-    const modal = document.getElementById('modal-escaner');
-    if (modal) modal.style.display = "none";
-    
-    camaraActivaHardware = false;
-    
-    // Si se cerró sin lectura, procesa la excepción vacía para retornar los botones al estado inicial
-  //  if (document.getElementById('txt-lector').value.trim() === "") {
-  //      procesarLectura({ key: 'Enter' });
-  //  }
-    
 }
 
 
@@ -1113,94 +1091,15 @@ function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
     else modal.classList.remove('contenedor-naranja');
     
     modal.style.display = "flex";
-    
-    // Activamos los sensores justo cuando aparece el modal gigante
-    // Guardamos el milisegundo exacto en el que se activa la pantalla verde
-    tiempoInicioSensores = Date.now();
-    sensoresActivos = false;
-// BLOQUE DE PROTECCIÓN INDUSTRIAL DE SENSORES
-    try {
-        // 1. Verificamos si las APIs existen nativamente en el navegador de este celular
-        const tieneOrientacion = ('DeviceOrientationEvent' in window) && (window.DeviceOrientationEvent !== null);
-        const tieneMovimiento = ('DeviceMotionEvent' in window) && (window.DeviceMotionEvent !== null);
-
-        if (tieneOrientacion || tieneMovimiento) {
-            // 2. Solo si el hardware es compatible, intentamos encender los escuchas
-            if (tieneOrientacion) {
-                window.addEventListener('deviceorientation', manejarInclinacionOperario, false);
-            }
-            if (tieneMovimiento) {
-                window.addEventListener('devicemotion', manejarGolpeOperario, false);
-            }
-            
-            // 3. Pasamos a true ÚNICAMENTE cuando la asignación fue exitosa
-            sensoresActivos = true;
-            console.log("Sensores activados con éxito para guantes.");
-        } else {
-            console.warn("Este dispositivo no cuenta con hardware de movimiento. Operación solo por pantalla táctil.");
-        }
-
-    } catch (error) {
-        // Si hay una restricción de permisos del navegador o error inesperado, forzamos el apagado
-        sensoresActivos = false;
-        console.error("Error crítico al inicializar sensores, fallback a pantalla activa:", error);
-        setTimeout(() => { modal.style.display = "none"; }, 1500);
-    }
-
+ 
 estadoSecuenciaActual = "EXITO_VERDE";
 
 }
 
-// --- CAPTURADORES DE SENSORES (Simulan el toque de pantalla) ---
-
-function manejarInclinacionOperario(event) {
-    if (!sensoresActivos) return;
-
-    // ESCUDO DE ESTABILIDAD: Si no han pasado al menos 200ms desde que se abrió el modal,
-    // ignoramos la lectura. Esto evita que el "despertar" ruidoso del sensor mienta.
-    if (Date.now() - tiempoInicioSensores < 1200) return;
-
-    const inclFrontal = Math.abs(event.beta);
-    const inclLateral = Math.abs(event.gamma);
-
-    if (inclFrontal > UMBRAL_INCLINACION || inclLateral > UMBRAL_INCLINACION) {
-        console.log("Activado por inclinación física estable.");
-        pantallaVerdePresionada();
-    }
-}
-
-function manejarGolpeOperario(event) {
-    if (!sensoresActivos) return; // Si ya se apagaron, ignorar
-
-    if (Date.now() - tiempoInicioSensores < 1200) return;
-
-    const acc = event.accelerationIncludingGravity;
-    if (!acc) return;
-
-    const fuerzaZpura = Math.abs(acc.z - 9.8);
-
-    // Si da un golpe seco en el marco o mesa superando tu umbral de 6
-    if (fuerzaZpura > UMBRAL_GOLPE) {
-        console.log("Activado por golpe seco en Z (Guantes puestos)");
-        pantallaVerdePresionada(); // Dispara tu evento original
-    }
-}
-
-
 function pantallaVerdePresionada() {
-    // 0. APAGADO QUIRÚRGICO: Lo primero es matar los sensores para liberar CPU inmediatamente
-    if (sensoresActivos) {
-        sensoresActivos = false;
-        window.removeEventListener('deviceorientation', manejarInclinacionOperario);
-        window.removeEventListener('devicemotion', manejarGolpeOperario);
-        console.log("Sensores removidos limpiamente. CPU liberada para la cámara.");
-    }
-
     // 1. Escondemos el cartel de éxito
     document.getElementById('modal-exito').style.display = "none";
-
     // 2. LLAMAMOS AL ENCENDIDO ORIGINAL (Levanta el hardware de cero de forma limpia)
-   // encenderCamaraBodega(); 
     simularToggleCamara()
 }
 
@@ -1216,8 +1115,6 @@ function limpiarPantallaCompleta() {
         actualizarTablaVista();
     }
 } 
-
-
 
 // Inicialización de la planta al cargar
 window.onload = function() {
