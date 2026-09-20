@@ -329,6 +329,8 @@
   // Esto lee automáticamente lo que esté después del "?" en la URL
 const urlParams = new URLSearchParams(window.location.search);
 const idPuesto = urlParams.get('puesto') || "LINEA_X"; 
+const idOrigen = urlParams.get('origen') || "B-J"; 
+const idEstadoOrigen = urlParams.get('estado') || "N"; 
 
 // (Opcional) Puedes mostrarlo en pantalla para que el operario sepa en qué puesto está:
 document.getElementById("nombre-linea").innerText = " " + idPuesto;
@@ -531,24 +533,23 @@ function procesarLectura(evento) {
     const segundosPurosCiclo = Math.round((momentoActual - ultimoHitoTime) / 1000);
     ultimoHitoTime = momentoActual; // Reseteo inmediato del hito para el siguiente ciclo
 
-    // ARQUITECTURA DEL OBJETO DE DATOS ASÍNCRONO
+    // ARQUITECTURA DEL OBJETO DE DATOS 
     const nuevoRegistro = {
         id: momentoActual,  //col A
         puesto: idPuesto,   //col B 
         dia: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),  // col C
         hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),  // col D
-        origen: "B-J",  //col E
-        estadoOrigen: "N", // col F
+        origen: idOrigen,  //col E  distintas bodegas de origen  ( parametro de URL )
+        estadoOrigen: idEstadoOrigen, // col F son letras A, E, R, S, DD, de logistica inversa o Nuevo, para revisar, reparar, completar(QR, otro) ( parametro de URL )
         qr: cadenaQR, // col G
         sku: skuExtraido, // col H
         serie: serieExtraida, // col I
-        lote: loteExtraido, //  col J
-        estadoFinal: estadoOrdenFinal,   // col K puede ser una letra tipo B-S o un texto tipo fuga, elec comp emb 
-        //motivo: seleccionCalidadActiva, 
-        destino: destinoDef, //col L
-        tiempoSegundos: segundosPurosCiclo,  // col M
-        adicfalla: "-", // col N
-        adicrpto: "-", // col O
+        lote: loteExtraido, //  col J  Orden de Compra
+        estadoFinal: estadoOrdenFinal,   // col K puede ser una letra tipo( E R B ) o un texto alusivo a la revisión ok o fuga, elec, comp, emb, DD      
+        destino: destinoDef, //col L  una bodega como en la S, B-01 si revisión ok, Z-R si se encuentra defecto
+        tiempoSegundos: segundosPurosCiclo,  // col M tiempos entre revision
+        adicfalla: "-", // col N  columna reservada para cuando se ocupe en zona de reparacion Z-R ( parametro de URL ?)
+        adicrpto: "-", // col O  columna reservada para cuando se ocupe en zona de reparacion Z-R  ( parametro de URL ?)
         sincronizado: false,  //col P
         esAnulado: false  // col Q
         };
@@ -1115,6 +1116,8 @@ function limpiarPantallaCompleta() {
         actualizarTablaVista();
     }
 } 
+
+
 
 // Inicialización de la planta al cargar
 window.onload = function() {
