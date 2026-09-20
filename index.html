@@ -370,10 +370,6 @@ let ultimoMovimientoTiempo = 0;
 let historialLecturasPRD = JSON.parse(localStorage.getItem('historial_bodega_prd')) || [];
 let ultimoHitoTime = Date.now(); // Estampa del milisegundo exacto del hito anterior
 
-// --- ESCUCHA DE SENSORES UNIFICADA ---
-if (window.DeviceOrientationEvent) {
-    window.addEventListener('deviceorientation', procesarMovimientoSecuencia, false);
-}
 
 function procesarMovimientoSecuencia(event) {
     // 1. Filtro Anti-PC y validación inicial
@@ -391,51 +387,6 @@ function procesarMovimientoSecuencia(event) {
             ultimoMovimientoTiempo = ahora;
             avanzarSecuenciaPorHardware();
         }
-    }
-}
-
-// --- EL CEREBRO DEL "IR Y VOLVER" ---
-function avanzarSecuenciaPorHardware() {
-    // Retroalimentación instantánea estilo Gurú
-    if ('vibrate' in navigator) navigator.vibrate(100);
-    console.log(`🔄 Movimiento detectado. Estado actual: ${estadoSecuenciaActual}`);
-
-    switch (estadoSecuenciaActual) {
-        
-        case "EXITO_VERDE":
-            // El operario está viendo el cartel verde gigante de éxito.
-            // Al mover/inclinar, avanzamos directo al siguiente escaneo.
-            console.log("Avanzando de Éxito Verde a Siguiente Escaneo");
-            
-            // Reutilizamos tu función táctil existente (que apaga sensores temporales y limpia)
-            pantallaVerdePresionada(); 
-            
-            // La función 'pantallaVerdePresionada' internamente llama a encender la cámara,
-            // pero para nuestra secuencia, el nuevo estado pasa a ser la cámara:
-            estadoSecuenciaActual = "CAMARA_NEGRA";
-            break;
-
-        case "CAMARA_NEGRA":
-            // El operario está en el contenedor negro gigante con la cámara abierta.
-            // Si mueve/inclina antes de leer un QR, significa que quiere CANCELAR e ir a la botonera.
-            console.log("Cancelando escaneo activo por movimiento -> Volviendo a Botonera");
-            
-            // Reutilizamos tu función existente del botón rojo de cancelar
-            apagarCamaraHardware(); 
-            
-            estadoSecuenciaActual = "BOTONERA";
-            break;
-
-        case "BOTONERA":
-            // El operario está en la pantalla principal/botonera limpia.
-            // Al mover/inclinar, el teléfono entiende que quiere iniciar un escaneo rápido en ráfaga.
-            console.log("Iniciando escaneo desde Botonera por movimiento");
-            
-            // Llamamos a tu función de apertura con la calidad que esté preseleccionada
-            simularToggleCamara();
-            
-            estadoSecuenciaActual = "CAMARA_NEGRA";
-            break;
     }
 }
 
@@ -528,9 +479,7 @@ async function exportar() {
     } catch (error) {
         alert("Archivo guardado localmente.");
         }
-
 }   
-
 
 // 3. CONTROL CENTRAL DE LA INTERFAZ Y PUESTOS (CEREBRO PRD)
 function fijarEstadoCalidad(codigo, boton) {
@@ -1118,9 +1067,22 @@ function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
     // Guardamos el milisegundo exacto en el que se activa la pantalla verde
     tiempoInicioSensores = Date.now();
     sensoresActivos = false;
+    estadoSecuenciaActual = "EXITO_VERDE";
 // BLOQUE DE PROTECCIÓN INDUSTRIAL DE SENSORES
     try {
         // 1. Verificamos si las APIs existen nativamente en el navegador de este celular
+        activarSensores();
+
+    } catch (error) {
+        // Si hay una restricción de permisos del navegador o error inesperado, forzamos el apagado
+        sensoresActivos = false;
+        console.error("Error crítico al inicializar sensores, fallback a pantalla activa:", error);
+    }
+
+}
+
+// --- CAPTURADORES DE SENSORES (Simulan el toque de pantalla) ---
+function activarSensores() {
         const tieneOrientacion = ('DeviceOrientationEvent' in window) && (window.DeviceOrientationEvent !== null);
         const tieneMovimiento = ('DeviceMotionEvent' in window) && (window.DeviceMotionEvent !== null);
 
@@ -1139,19 +1101,7 @@ function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
         } else {
             console.warn("Este dispositivo no cuenta con hardware de movimiento. Operación solo por pantalla táctil.");
         }
-
-    } catch (error) {
-        // Si hay una restricción de permisos del navegador o error inesperado, forzamos el apagado
-        sensoresActivos = false;
-        console.error("Error crítico al inicializar sensores, fallback a pantalla activa:", error);
-        setTimeout(() => { modal.style.display = "none"; }, 1500);
-    }
-
-estadoSecuenciaActual = "EXITO_VERDE";
-
 }
-
-// --- CAPTURADORES DE SENSORES (Simulan el toque de pantalla) ---
 
 function manejarInclinacionOperario(event) {
     if (!sensoresActivos) return;
@@ -1165,7 +1115,8 @@ function manejarInclinacionOperario(event) {
 
     if (inclFrontal > UMBRAL_INCLINACION || inclLateral > UMBRAL_INCLINACION) {
         console.log("Activado por inclinación física estable.");
-        pantallaVerdePresionada();
+        apagadoSensores();
+        avanzarSecuenciaPorHardware();
     }
 }
 
@@ -1182,20 +1133,64 @@ function manejarGolpeOperario(event) {
     // Si da un golpe seco en el marco o mesa superando tu umbral de 6
     if (fuerzaZpura > UMBRAL_GOLPE) {
         console.log("Activado por golpe seco en Z (Guantes puestos)");
+        apagadoSensores();
         pantallaVerdePresionada(); // Dispara tu evento original
     }
 }
 
+function avanzarSecuenciaPorHardware() {
+    // Retroalimentación instantánea estilo Gurú
+    if ('vibrate' in navigator) navigator.vibrate(100);
+    console.log(`🔄 Movimiento detectado. Estado actual: ${estadoSecuenciaActual}`);
 
-function pantallaVerdePresionada() {
-    // 0. APAGADO QUIRÚRGICO: Lo primero es matar los sensores para liberar CPU inmediatamente
+    switch (estadoSecuenciaActual) {
+        
+        case "EXITO_VERDE":
+            // El operario está viendo el cartel verde gigante de éxito.
+            // Al mover/inclinar, avanzamos directo al siguiente escaneo.
+            console.log("Avanzando de Éxito Verde a Siguiente Escaneo");
+            // Reutilizamos tu función táctil existente (que apaga sensores temporales y limpia)
+            estadoSecuenciaActual = "CAMARA_NEGRA";
+            pantallaVerdePresionada(); 
+            
+            // La función 'pantallaVerdePresionada' internamente llama a encender la cámara,
+            // pero para nuestra secuencia, el nuevo estado pasa a ser la cámara:
+            break;
+
+        case "CAMARA_NEGRA":
+            // El operario está en el contenedor negro gigante con la cámara abierta.
+            // Si mueve/inclina antes de leer un QR, significa que quiere CANCELAR e ir a la botonera.
+            console.log("Cancelando escaneo activo por movimiento -> Volviendo a Botonera");
+            
+            // Reutilizamos tu función existente del botón rojo de cancelar
+            apagarCamaraHardware(); 
+            
+            estadoSecuenciaActual = "BOTONERA";
+            break;
+
+        case "BOTONERA":
+            // El operario está en la pantalla principal/botonera limpia.
+            // Al mover/inclinar, el teléfono entiende que quiere iniciar un escaneo rápido en ráfaga.
+            console.log("Iniciando escaneo desde Botonera por movimiento");
+            
+            // Llamamos a tu función de apertura con la calidad que esté preseleccionada
+            simularToggleCamara();
+            
+            estadoSecuenciaActual = "CAMARA_NEGRA";
+            break;
+    }
+}
+
+function apagadoSensores() {
     if (sensoresActivos) {
         sensoresActivos = false;
         window.removeEventListener('deviceorientation', manejarInclinacionOperario);
         window.removeEventListener('devicemotion', manejarGolpeOperario);
         console.log("Sensores removidos limpiamente. CPU liberada para la cámara.");
     }
+}
 
+function pantallaVerdePresionada() {
     // 1. Escondemos el cartel de éxito
     document.getElementById('modal-exito').style.display = "none";
 
@@ -1216,8 +1211,6 @@ function limpiarPantallaCompleta() {
         actualizarTablaVista();
     }
 } 
-
-
 
 // Inicialización de la planta al cargar
 window.onload = function() {
