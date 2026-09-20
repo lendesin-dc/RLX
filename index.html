@@ -371,24 +371,6 @@ let historialLecturasPRD = JSON.parse(localStorage.getItem('historial_bodega_prd
 let ultimoHitoTime = Date.now(); // Estampa del milisegundo exacto del hito anterior
 
 
-function procesarMovimientoSecuencia(event) {
-    // 1. Filtro Anti-PC y validación inicial
-    if (event.beta === null || event.gamma === null) return;
-
-    const inclFrontal = Math.abs(event.beta);
-    const inclLateral = Math.abs(event.gamma);
-
-    // 2. Evaluamos si el movimiento supera tu umbral de 6
-    if (inclFrontal > UMBRAL_MOVIMIENTO || inclLateral > UMBRAL_MOVIMIENTO) {
-        const ahora = Date.now();
-        
-        // Freno de rebote (debounce) de 1 segundo para evitar saltos dobles accidentales
-        if (ahora - ultimoMovimientoTiempo > 1000) { 
-            ultimoMovimientoTiempo = ahora;
-            avanzarSecuenciaPorHardware();
-        }
-    }
-}
 
 // 2.1 Boton del medio
 async function exportar() {
@@ -494,6 +476,8 @@ function fijarEstadoCalidad(codigo, boton) {
         boton.classList.add('pareto-active');
     }
     console.log("Estado seleccionado listo para captura:", seleccionCalidadActiva);
+    estadoSecuenciaActual = "BOTONERA";
+    activarSensores();
 }
 
 // 4. PROCESADOR DE ENTRADA CENTRAL DE DATOS (BACKOFFICE DE LECTURA)
@@ -658,8 +642,6 @@ async function analizarCuadroCamara() {
     }
 }
 
-
-
 function apagarCamaraHardware() {
     
     if (streamActivoBodega) {
@@ -675,26 +657,6 @@ function apagarCamaraHardware() {
     }
     estadoSecuenciaActual = "BOTONERA";
 }
-
-function apagarCamaraHardware2() {
-    fijarEstadoCalidad('OK', document.getElementById('btn-ok-base'));
-    estadoCalidadPrevio = "OK";
-    seleccionCalidadActiva = "OK";     
-    if (streamActivoBodega) {
-        streamActivoBodega.getTracks().forEach(track => track.stop());
-    }
-    const modal = document.getElementById('modal-escaner');
-    if (modal) modal.style.display = "none";
-    
-    camaraActivaHardware = false;
-    
-    // Si se cerró sin lectura, procesa la excepción vacía para retornar los botones al estado inicial
-  //  if (document.getElementById('txt-lector').value.trim() === "") {
-  //      procesarLectura({ key: 'Enter' });
-  //  }
-    
-}
-
 
 // 6. CONTROL DE MUTACIONES ERGONÓMICAS DE LA FRANJA DE HARDWARE (CON CURSOR GRUESO A LA IZQUIERDA)
 function activarModoDigitacion() {
@@ -1065,8 +1027,6 @@ function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
     
     // Activamos los sensores justo cuando aparece el modal gigante
     // Guardamos el milisegundo exacto en el que se activa la pantalla verde
-    tiempoInicioSensores = Date.now();
-    sensoresActivos = false;
     estadoSecuenciaActual = "EXITO_VERDE";
 // BLOQUE DE PROTECCIÓN INDUSTRIAL DE SENSORES
     try {
@@ -1085,7 +1045,8 @@ function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
 function activarSensores() {
         const tieneOrientacion = ('DeviceOrientationEvent' in window) && (window.DeviceOrientationEvent !== null);
         const tieneMovimiento = ('DeviceMotionEvent' in window) && (window.DeviceMotionEvent !== null);
-
+        tiempoInicioSensores = Date.now();
+        sensoresActivos = false;
         if (tieneOrientacion || tieneMovimiento) {
             // 2. Solo si el hardware es compatible, intentamos encender los escuchas
             if (tieneOrientacion) {
@@ -1094,7 +1055,6 @@ function activarSensores() {
             if (tieneMovimiento) {
                 window.addEventListener('devicemotion', manejarGolpeOperario, false);
             }
-            
             // 3. Pasamos a true ÚNICAMENTE cuando la asignación fue exitosa
             sensoresActivos = true;
             console.log("Sensores activados con éxito para guantes.");
@@ -1108,7 +1068,7 @@ function manejarInclinacionOperario(event) {
 
     // ESCUDO DE ESTABILIDAD: Si no han pasado al menos 200ms desde que se abrió el modal,
     // ignoramos la lectura. Esto evita que el "despertar" ruidoso del sensor mienta.
-    if (Date.now() - tiempoInicioSensores < 1200) return;
+    if (Date.now() - tiempoInicioSensores < 800) return;
 
     const inclFrontal = Math.abs(event.beta);
     const inclLateral = Math.abs(event.gamma);
@@ -1134,7 +1094,7 @@ function manejarGolpeOperario(event) {
     if (fuerzaZpura > UMBRAL_GOLPE) {
         console.log("Activado por golpe seco en Z (Guantes puestos)");
         apagadoSensores();
-        pantallaVerdePresionada(); // Dispara tu evento original
+        avanzarSecuenciaPorHardware(); // Dispara tu evento original
     }
 }
 
@@ -1161,11 +1121,10 @@ function avanzarSecuenciaPorHardware() {
             // El operario está en el contenedor negro gigante con la cámara abierta.
             // Si mueve/inclina antes de leer un QR, significa que quiere CANCELAR e ir a la botonera.
             console.log("Cancelando escaneo activo por movimiento -> Volviendo a Botonera");
-            
             // Reutilizamos tu función existente del botón rojo de cancelar
-            apagarCamaraHardware(); 
-            
             estadoSecuenciaActual = "BOTONERA";
+            apagarCamaraHardware(); 
+         
             break;
 
         case "BOTONERA":
@@ -1174,9 +1133,9 @@ function avanzarSecuenciaPorHardware() {
             console.log("Iniciando escaneo desde Botonera por movimiento");
             
             // Llamamos a tu función de apertura con la calidad que esté preseleccionada
+            estadoSecuenciaActual = "CAMARA_NEGRA";
             simularToggleCamara();
             
-            estadoSecuenciaActual = "CAMARA_NEGRA";
             break;
     }
 }
