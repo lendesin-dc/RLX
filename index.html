@@ -27,7 +27,7 @@
         }
 
         .contenedor { 
-            max-width: 700px; 
+            max-width: 650px; 
             margin: 0 auto; 
             background: white; 
             padding: 8px; 
@@ -145,7 +145,7 @@
 
         /* TABLA DE REGISTROS */
         .tabla-contenedor { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 6px; margin-top: 5px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 630px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 600px; }
         th { background: #212529; color: white; padding: 9px 3px; text-transform: uppercase; font-size: 12px; }
         td { padding: 8px 4px; border-bottom: 1px solid #dee2e6; }
         tr.row-reparar { background-color: #fff7ed !important; }
@@ -249,7 +249,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start; /* Distribuye arriba, al medio y abajo */
-    padding-top: 40px;
+    padding-top: 30px;
     box-sizing: border-box;
 ">
     <!-- ARRIBA: Cartel Dinámico de Selección Activa -->
@@ -260,7 +260,7 @@
         margin-bottom: 40px;    
         border-radius: 6px; 
         font-weight: bold; 
-        font-size: 1.5rem; /* Más grande para legibilidad del operario */
+        font-size: 1.4rem; /* Más grande para legibilidad del operario */
         text-transform: uppercase;
         box-shadow: 0 4px 15px rgba(255,255,255,0.1);
         display: flex;
@@ -813,8 +813,8 @@ function actualizarTablaVista() {
         thead.innerHTML = `
             <tr>
                 <th style="width: 15%;">Hora</th>
-                <th style="width: 30%;">Producto</th>
-                <th style="width: 20%;">Serie</th>
+                <th style="width: 25%;">Producto</th>
+                <th style="width: 25%;">Serie</th>
                 <th style="width: 15%;">Duración</th>
                 <th style="width: 20%; text-align: center;">Estado Nube</th>
             </tr>
@@ -856,11 +856,11 @@ function actualizarTablaVista() {
                 // DISTRIBUCIÓN ANTIVUELCO DE ANCHOS (TOTAL: 100%)
         thead.innerHTML = `
             <tr>
-                <th style="width: 30%; text-align: left;">Producto</th>
-                <th style="width: 14%; text-align: center;">Válidos</th>
-                <th style="width: 14%; text-align: center;">Fallados</th>
-                <th style="width: 22%; text-align: center; background-color: #1e293b; color: white;">Tiempo</th>
-                <th style="width: 14%; text-align: center;">Total</th>
+                <th style="width: 25%; text-align: left;">Producto</th>
+                <th style="width: 20%; text-align: center;">Válidos</th>
+                <th style="width: 18%; text-align: center;">Fallados</th>
+                <th style="width: 17%; text-align: center; background-color: #1e293b; color: white;">Tiempo</th>
+                <th style="width: 20%; text-align: center;">Total</th>
             </tr>
         `;
 
@@ -879,7 +879,7 @@ function actualizarTablaVista() {
                 };
             }
 
-            if (reg.motivo === "OK") agrupadoSKU[skuClave].validos++;
+            if (reg.estadoFinal === "OK") agrupadoSKU[skuClave].validos++;
             else agrupadoSKU[skuClave].incidencias++;
 
             // Filtro de descarte para tiempos mayores a 20 minutos (1200 segundos)
@@ -1005,6 +1005,7 @@ function sonarBip750Hz() {
 
     } catch (e) { console.error("Audio bloqueado por navegador:", e); }
 }
+let PresionaNaranja = false;
 
 function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
     const modal = document.getElementById('modal-exito');
@@ -1015,7 +1016,9 @@ function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
     else modal.classList.remove('contenedor-naranja');
     
     modal.style.display = "flex";
-    
+
+    if (esDefecto) { PresionaNaranja = true;  } else { PresionaNaranja = false }
+
     // Activamos los sensores justo cuando aparece el modal gigante
     // Guardamos el milisegundo exacto en el que se activa la pantalla verde
     tiempoInicioSensores = Date.now();
@@ -1058,7 +1061,7 @@ function manejarInclinacionOperario(event) {
 
     // ESCUDO DE ESTABILIDAD: Si no han pasado al menos 200ms desde que se abrió el modal,
     // ignoramos la lectura. Esto evita que el "despertar" ruidoso del sensor mienta.
-    if (Date.now() - tiempoInicioSensores < 1200) return;
+    if (Date.now() - tiempoInicioSensores < 1000) return;
 
     const inclFrontal = Math.abs(event.beta);
     const inclLateral = Math.abs(event.gamma);
@@ -1072,7 +1075,7 @@ function manejarInclinacionOperario(event) {
 function manejarGolpeOperario(event) {
     if (!sensoresActivos) return; // Si ya se apagaron, ignorar
 
-    if (Date.now() - tiempoInicioSensores < 1200) return;
+    if (Date.now() - tiempoInicioSensores < 1000) return;
 
     const acc = event.accelerationIncludingGravity;
     if (!acc) return;
@@ -1101,7 +1104,8 @@ function pantallaVerdePresionada() {
 
     // 2. LLAMAMOS AL ENCENDIDO ORIGINAL (Levanta el hardware de cero de forma limpia)
    // encenderCamaraBodega(); 
-    simularToggleCamara()
+    if (!PresionaNaranja) simularToggleCamara();
+    
 }
 
 function guardarEnMemoriaLocal() {
@@ -1116,8 +1120,6 @@ function limpiarPantallaCompleta() {
         actualizarTablaVista();
     }
 } 
-
-
 
 // Inicialización de la planta al cargar
 window.onload = function() {
