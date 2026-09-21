@@ -360,8 +360,8 @@ let analisisEnProgreso = false;
 let estaProcesandoCola = false;
 
 // Constantes globales de logica y calibración (las que probaste en tu medidor)
-const UMBRAL_GOLPE = 15;
-const UMBRAL_INCLINACION = 9;
+const UMBRAL_GOLPE = 28;
+const UMBRAL_INCLINACION = 25;
 
 let sensoresActivos = false;
 let tiempoInicioSensores = 0;
@@ -1081,15 +1081,10 @@ function manejarGolpeOperario(event) {
     if (!acc) return;
 
     const fuerzaZpura = Math.abs(acc.z - 9.8);
-    const compY = Math.abs(acc.y );
 
     // Si da un golpe seco en el marco o mesa superando tu umbral de 6
     if (fuerzaZpura > UMBRAL_GOLPE) {
         console.log("Activado por golpe seco en Z (Guantes puestos)");
-        pantallaVerdePresionada(); // Dispara tu evento original
-    } else {
-        if (compY > UMBRAL_INCLINACION ) {
-        console.log("Activado por componente Y (Guantes puestos)");
         pantallaVerdePresionada(); // Dispara tu evento original
     }
 }
