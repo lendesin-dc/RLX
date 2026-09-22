@@ -148,7 +148,7 @@
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 600px; }
         th { background: #212529; color: white; padding: 9px 3px; text-transform: uppercase; font-size: 12px; }
         td { padding: 8px 4px; border-bottom: 1px solid #dee2e6; }
-        tr.row-reparar { background-color: #fff7ed !important; }
+        tr.row-reparar { background-color: #efbea7 !important; }
         tr.row-pausa-sistema { background-color: #fef2f2 !important; }
 
         /* BADGES ESTADOS */
@@ -360,8 +360,8 @@ let analisisEnProgreso = false;
 let estaProcesandoCola = false;
 
 // Constantes globales de logica y calibración (las que probaste en tu medidor)
-const UMBRAL_GOLPE = 9;
-const UMBRAL_INCLINACION = 25;
+const UMBRAL_GOLPE = 6;
+const UMBRAL_INCLINACION = 6;
 
 let sensoresActivos = false;
 let tiempoInicioSensores = 0;
@@ -516,18 +516,26 @@ function procesarLectura(evento) {
     // VERIFICACIÓN DE REPETIDOS (RESTRICCIÓN DE MENOS DE 5 MINUTOS)
     const momentoActual = Date.now();
     const registroDuplicado = historialLecturasPRD.find(item => 
-        item.serie === serieExtraida && item.sku === skuExtraido && !item.esAnulado
-    );
+        item.serie === serieExtraida && item.sku === skuExtraido &&  !item.esAnulado 
+        );
+
+    let IDORIGEN = idOrigen;
+    let IDESTADOORIGEN = idEstadoOrigen;
+
 
     if (registroDuplicado) {
         const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
-        if (diferenciaMinutos < 15) {
-            alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.`);
-            input.value = "";
-            procesarLectura({ key: 'Enter' });
-            return;
+            
+             if ( diferenciaMinutos < 2500 && registroDuplicado.estadoFinal === estadoOrdenFinal ) {
+                alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.`);
+                input.value = "";
+                procesarLectura({ key: 'Enter' });
+                return
+                } else {
+                    IDORIGEN = registroDuplicado.puesto; IDESTADOORIGEN = registroDuplicado.estadoFinal } 
         }
-    }
+        
+    
 
     // AUDITORÍA DE TIEMPOS MUERTOS Y PRODUCTIVIDAD (CÁLCULO EN SEGUNDOS PUROS)
     const segundosPurosCiclo = Math.round((momentoActual - ultimoHitoTime) / 1000);
@@ -539,8 +547,8 @@ function procesarLectura(evento) {
         puesto: idPuesto,   //col B 
         dia: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),  // col C
         hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),  // col D
-        origen: idOrigen,  //col E  distintas bodegas de origen  ( parametro de URL )
-        estadoOrigen: idEstadoOrigen, // col F son letras A, E, R, S, DD, de logistica inversa o Nuevo, para revisar, reparar, completar(QR, otro) ( parametro de URL )
+        origen: IDORIGEN,  //col E  distintas bodegas de origen  ( parametro de URL )
+        estadoOrigen: IDESTADOORIGEN, // col F son letras A, E, R, S, DD, de logistica inversa o Nuevo, para revisar, reparar, completar(QR, otro) ( parametro de URL )
         qr: cadenaQR, // col G
         sku: skuExtraido, // col H
         serie: serieExtraida, // col I
@@ -765,6 +773,7 @@ function alternarPausaLinea() {
             qr: "SISTEMA_PAUSA_TOTAL",
             sku: "PAUSA", // Queda agrupado de forma idéntica
             serie: "DETENCION",
+            lote: "",
             estadoFinal: "PAUSA",
             destino: "-",
             tiempoSegundos: segundosPausaMuerta,
@@ -1120,6 +1129,8 @@ function limpiarPantallaCompleta() {
         actualizarTablaVista();
     }
 } 
+
+
 
 // Inicialización de la planta al cargar
 window.onload = function() {
