@@ -613,8 +613,20 @@ async function simularToggleCamara() {
         const videoElemento = document.getElementById('video-bodega-stream');
         videoElemento.srcObject = streamActivoBodega;
 
+        const pistaVideo = streamActivoBodega.getVideoTracks()[0];
+    
+        // Validamos si el navegador y el dispositivo soportan la linterna (torch)
+        if (pistaVideo && typeof pistaVideo.getCapabilities === 'function') {
+            const capabilities = pistaVideo.getCapabilities();
+            if (capabilities.torch) {
+                await pistaVideo.applyConstraints({
+                    advanced: [{ torch: true }] // Enciende la luz automáticamente
+                });
+            }
+        }
+
         // Iniciamos el bucle de análisis rápido acelerado cada 180 milisegundos
-        window.bucleEscaneo = setInterval(analizarCuadroCamara, 180);
+        window.bucleEscaneo = setInterval(analizarCuadroCamara, 220);
     } catch (err) {
         alert("Acceso al hardware bloqueado. Asegúrese de dar permisos de cámara en la barra de direcciones HTTPS.");
         apagarCamaraHardware();
