@@ -360,8 +360,8 @@ let analisisEnProgreso = false;
 let estaProcesandoCola = false;
 
 // Constantes globales de logica y calibración (las que probaste en tu medidor)
-const UMBRAL_GOLPE = 14;
-const UMBRAL_INCLINACION = 26;
+const UMBRAL_GOLPE = 16;
+const UMBRAL_INCLINACION = 46;
 
 let sensoresActivos = false;
 let tiempoInicioSensores = 0;
@@ -953,7 +953,7 @@ function enviarAGoogleSheets(objetoRegistro) {
         console.warn("Dispositivo sin red en este milisegundo. Registro guardado en cola local.");
         return;
     }
-
+    estaProcesandoCola = true;
     fetch(URL_GOOGLE_APP, {
         method: "POST",
         mode: "no-cors",
