@@ -328,15 +328,43 @@
 // 0. IDENTIFICACION DE PUESTO DE TRABAJO
   // Esto lee automáticamente lo que esté después del "?" en la URL
 const urlParams = new URLSearchParams(window.location.search);
-const idPuesto = urlParams.get('puesto') || "LINEA_X";
-const idOrigen = urlParams.get('origen') || "B-J";
-const idEstadoOrigen = urlParams.get('estado') || "N";
+const idPuesto = urlParams.get('puesto') || "LINEA-2";
+let idOrigen = urlParams.get('origen') || "B-J";
+let idEstadoOrigen = urlParams.get('estado') || "NOR";
 
-// (Opcional) Puedes mostrarlo en pantalla para que el operario sepa en qué puesto está:
-document.getElementById("nombre-linea").innerText = " " + idPuesto;
 
 // 1. CONFIGURACIÓN DEL ENTORNO REMOTO DE GOOGLE SHEETS
 const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbwgXz11ga0JPKWNq98gkaXn0t-N_yO4ZcMgD15Y3V3pIfnau42443kooNknmoFRFZBf/exec";
+
+const URL_GANTT = "https://script.google.com/macros/s/AKfycbxoDJlOxRApjJQHiODdqQR-7hNx6zBAe2p6hG23pgTMB_eKI29Azy7caV9Vk6Cc7fU/exec?puesto=";
+
+// Variable global para guardar las Órdenes de Compra válidas de la línea
+var matrizGantt = []; 
+
+// Función tradicional para descargar los datos de la hoja correspondiente
+function cargarMatrizGantt() {
+  // Construimos la URL completa concatenando el idPuesto que usa tu app
+  var urlCompleta = URL_GANTT + idPuesto;
+
+  fetch(urlCompleta)
+    .then(function(respuesta) {
+      return respuesta.json();
+    })
+    .then(function(datos) {
+      matrizGantt = datos;
+      console.log("Matriz de validación cargada con éxito para: " + idPuesto);
+    })
+    .catch(function(error) {
+      console.error("Error al descargar la matriz GANTT: ", error);
+      // Opcional: Aquí podrías alertar sonoramente si la app arranca sin conexión
+    });
+}
+
+// Ejecutas esta función al cargar la página/app
+cargarMatrizGantt();
+// (Opcional) Puedes mostrarlo en pantalla para que el operario sepa en qué puesto está:
+document.getElementById("nombre-linea").innerText = " " + idPuesto;
+
 
 // MAPEO ERGONÓMICO DE ICONOS INDUSTRIALES PARA RENDERIZADO VISUAL
 const MAPA_ICONOS = {
@@ -508,20 +536,48 @@ function procesarLectura(evento) {
     const segmentos = cadenaQR.split('#');
     const skuExtraido = segmentos[0] || '-';
     const serieExtraida = segmentos[1] || '-';
-    let loteExtraido = segmentos[2] || '-';
-    let estadoOrdenFinal = seleccionCalidadActiva;
-    let destinoDef = "";
+    let loteExtraido = segmentos[2] || '-';  // puede ser una letra  A R E si pasó por bodega S en este caso se asignará como estadoOrdenFinal 
     if ( loteExtraido.length < 3 ) { estadoOrdenFinal = loteExtraido; loteExtraido = ""; }
-    if (seleccionCalidadActiva === "OK") { destinoDef = "B-01" } else { destinoDef = "Z-R"}
+    let estadoOrdenFinal = seleccionCalidadActiva;   // es la botonera de produccion ok emb fuga
+    let destinoDef = "";   // es la bodega B-01 por defecto o Z-RCHZ  Zona de Rechazo 
+    if (seleccionCalidadActiva === "OK") { destinoDef = "B-01" } else { destinoDef = "Z-RCHZ"}
     // VERIFICACIÓN DE REPETIDOS (RESTRICCIÓN DE MENOS DE 5 MINUTOS)
+
+    let IDORIGEN = idOrigen; // valor por defecto  B-J
+    let IDESTADOORIGEN = idEstadoOrigen; // valor por defecto   NOR
+    
+  // --- INICIO DE TU NUEVA LÓGICA DE VALIDACIÓN MATRICIAL ---
+  // Buscamos la Orden de Compra del QR (loteExtraido) en la GANTT en coincidencia que es una fila que parte en cero ( A )
+  var coincidencia = matrizGantt.find(function(fila) {
+    // fila[1] corresponde a la columna B de la GANTT (Orden de Compra)
+    return fila[1].toString().trim() === loteExtraido.trim(); // si encuentra la O compra coincidencia lo trae
+  });
+  // Capturamos el elemento de texto de la Orden de Compra en tu cartel gigante
+  var elementoOCompraPantalla = document.getElementById("modal-orden");
+
+  if (coincidencia) {   // coincidencia dieferente de vacio es verdadero
+        // ¡CORRESPONDE! Enriquecemos trayendo Origen (col C / índice 2) y Estado Origen (col D / índice 3)
+        IDORIGEN = coincidencia[2];  // se usa de acuerdo a GANTT
+        IDESTADOORIGEN = coincidencia[3];  
+        // Forzamos letras BLANCAS en tu cartel de éxito 
+        if (elementoOCompraPantalla) {
+            elementoOCompraPantalla.style.color = "white";
+            }
+  } else {   // no hay coincidencia , no encuentra la orden en la GANTT
+        //  Mantenemos los valores por defecto que venían de la URL
+        IDORIGEN = idOrigen;
+        IDESTADOORIGEN = idEstadoOrigen;
+        // ALERTA VISUAL MÁXIMA: Las letras de la O.Compra pasan a ROJO en el cartel
+        if (elementoOCompraPantalla) {
+            elementoOCompraPantalla.style.color = "red";
+            }
+  }
+  // --- FIN DE LA LÓGICA DE VALIDACIÓN MATRICIAL ---
+  // Si está duplicado no se usa y pasa de largo y si el duplicado es porque se fue a Rechazo entonces se rescata desde rechazo 
     const momentoActual = Date.now();
     const registroDuplicado = historialLecturasPRD.find(item =>
         item.serie === serieExtraida && item.sku === skuExtraido &&  !item.esAnulado
         );
-
-    let IDORIGEN = idOrigen;
-    let IDESTADOORIGEN = idEstadoOrigen;
-
 
     if (registroDuplicado) {
         const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
@@ -532,10 +588,8 @@ function procesarLectura(evento) {
                 procesarLectura({ key: 'Enter' });
                 return
                 } else {
-                    IDORIGEN = registroDuplicado.puesto; IDESTADOORIGEN = registroDuplicado.estadoFinal }
+                    IDORIGEN = registroDuplicado.destino; IDESTADOORIGEN = registroDuplicado.estadoFinal }
         }
-
-
 
     // AUDITORÍA DE TIEMPOS MUERTOS Y PRODUCTIVIDAD (CÁLCULO EN SEGUNDOS PUROS)
     const segundosPurosCiclo = Math.round((momentoActual - ultimoHitoTime) / 1000);
