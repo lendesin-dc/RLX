@@ -145,9 +145,9 @@
 
         /* TABLA DE REGISTROS */
         .tabla-contenedor { overflow-x: auto; border: 1px solid #dee2e6; border-radius: 6px; margin-top: 5px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; min-width: 580px; }
         th { background: #212529; color: white; padding: 9px 3px; text-transform: uppercase; font-size: 12px; }
-        td { padding: 8px 4px; border-bottom: 1px solid #dee2e6; }
+        td { padding: 6px 4px; border-bottom: 1px solid #dee2e6; }
         tr.row-reparar { background-color: #efbea7 !important; }
         tr.row-pausa-sistema { background-color: #fef2f2 !important; }
 
@@ -877,7 +877,7 @@ function solicitarAnulacion(idRegistro) {
         actualizarTablaVista();
         enviarAGoogleSheets(registro);
     }
-    document.getElementById('C-328').focus();
+    document.getElementById('btn-ok-base').focus();
 }
 
 function actualizarTablaVista() {
