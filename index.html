@@ -1035,15 +1035,14 @@ function enviarAGoogleSheets(objetoRegistro) {
 }
 
 // NUEVA FUNCIÓN: ESCANER DE HISTORIAL PARA IDENTIFICAR REGISTROS ATRAPADOS EN MODO AVIÓN
-function reprocesarColaPendiente() {
+async function reprocesarColaPendiente() {
     if (!navigator.onLine) return; // Sin internet no hacemos nada
-
     // SI EL SEMÁFORO ESTÁ EN ROJO (true), REBOTAMOS
     if (estaProcesandoCola) {
         console.log("🚦 Semáforo en ROJO: Esperando que termine el envío en curso...");
         return;
     }
-
+    await new Promise(resolve => setTimeout(resolve, 2000));
     // Buscamos registros que aún no se hayan sincronizado
     const registrosAtrapados = historialLecturasPRD.filter(reg => !reg.sincronizado);
 
