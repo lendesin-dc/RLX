@@ -649,7 +649,7 @@ async function simularToggleCamara() {
    //     apagarCamaraHardware();
    //     return;
    // }
-    analisisEnProgreso = false;
+    
     // Levantamos visualmente la ventana del escáner inyectando el visor dinámico si no existe
     document.getElementById('escaneo-cartel-superior').innerHTML = `<span>${seleccionCalidadActiva}</span> <span>${
         MAPA_ICONOS[seleccionCalidadActiva]}</span>`;
@@ -668,6 +668,7 @@ async function simularToggleCamara() {
         videoElemento.srcObject = streamActivoBodega;
 
         // Iniciamos el bucle de análisis rápido acelerado cada 180 milisegundos
+        analisisEnProgreso = false;
         window.bucleEscaneo = setInterval(analizarCuadroCamara, 230);
     } catch (err) {
         alert("Acceso al hardware bloqueado. Asegúrese de dar permisos de cámara en la barra de direcciones HTTPS.");
@@ -1139,7 +1140,8 @@ function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
 
 // --- CAPTURADORES DE SENSORES (Simulan el toque de pantalla) ---
 function manejarInclinacionOperario(event) {
-    if (!sensoresActivos) return;
+    if (!sensoresActivos ) return;
+    if (estaProcesandoCola) return;
 
     // ESCUDO DE ESTABILIDAD: Si no han pasado al menos 200ms desde que se abrió el modal,
     // ignoramos la lectura. Esto evita que el "despertar" ruidoso del sensor mienta.
@@ -1155,7 +1157,8 @@ function manejarInclinacionOperario(event) {
 }
 
 function manejarGolpeOperario(event) {
-    if (!sensoresActivos) return; // Si ya se apagaron, ignorar
+    if (!sensoresActivos ) return;
+    if (estaProcesandoCola ) return; // Si ya se apagaron, ignorar
 
     if (Date.now() - tiempoInicioSensores < 1000) return;
 
