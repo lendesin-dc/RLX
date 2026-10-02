@@ -1024,18 +1024,21 @@ function enviarAGoogleSheets(objetoRegistro) {
             console.log("Sincronización exitosa para ID:", objetoRegistro.id);
 
             // TRUCO INDUSTRIAL: Si este envío tuvo éxito, barremos la cola por si había registros antiguos atrapados
-            estaProcesandoCola = false;
-            reprocesarColaPendiente();
+//            estaProcesandoCola = false;
+  //          reprocesarColaPendiente();
        // }
     })
     .catch(err => {
         console.error("Fallo de red en transmisión asíncrona. Se reintentará luego:", err);
         estaProcesandoCola = false;
     });
+            estaProcesandoCola = false;
+            reprocesarColaPendiente();
+    
 }
 
 // NUEVA FUNCIÓN: ESCANER DE HISTORIAL PARA IDENTIFICAR REGISTROS ATRAPADOS EN MODO AVIÓN
-async function reprocesarColaPendiente() {
+function reprocesarColaPendiente() {
     if (!navigator.onLine) return; // Sin internet no hacemos nada
 
     // SI EL SEMÁFORO ESTÁ EN ROJO (true), REBOTAMOS
@@ -1043,7 +1046,7 @@ async function reprocesarColaPendiente() {
         console.log("🚦 Semáforo en ROJO: Esperando que termine el envío en curso...");
         return;
     }
-    await new Promise(resolve => setTimeout(resolve, 3000));
+
     // Buscamos registros que aún no se hayan sincronizado
     const registrosAtrapados = historialLecturasPRD.filter(reg => !reg.sincronizado);
 
