@@ -219,11 +219,11 @@
     <div style="display: flex; padding: 4px 12px; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 15px;">
 
-            <button id="btn-cambiar-modo" onclick="conmutarModoVista()" style="background-color: #2563eb; color: white; border: none; padding: 12px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: background 0.2s;">
+            <button id="btn-cambiar-modo" onclick="conmutarModoVista()" style="background-color: #2563eb; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: background 0.2s;">
                  📊 Ver SubTotales
             </button>
         </div>
-        <button id="btn-exportar" onclick="exportar()" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight:bold; font-size: 1.1rem;">Exportar</button>
+        <button id="btn-exportar" onclick="exportar()" style="background: #6c757d; color: white; border: none; padding: 12px 12px; border-radius: 6px; cursor: pointer; font-weight:bold; font-size: 1.1rem;">Exportar</button>
         <button id="btn-limpiar-vista" onclick="limpiarPantallaCompleta()" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight:bold; font-size: 1.1rem;">Limpiar Vista</button>
     </div>
 
@@ -616,12 +616,12 @@ function procesarLectura(evento) {
         esAnulado: false  // col Q
         };
 
-    historialLecturasPRD.unshift(nuevoRegistro);
-    guardarEnMemoriaLocal();
     // TRANSMISIÓN INMEDIATA A GOOGLE SHEETS
-    enviarAGoogleSheets(nuevoRegistro);
     // EMISIÓN DE AVISOS ACÚSTICOS INDUSTRIALES Y PANTALLA GIGANTE
+    historialLecturasPRD.unshift(nuevoRegistro);
+    enviarAGoogleSheets(nuevoRegistro);
     sonarBip750Hz();
+    guardarEnMemoriaLocal();
     dispararCartelExito(loteExtraido, skuExtraido + (seleccionCalidadActiva !== "OK" ? ` (${seleccionCalidadActiva})` : ""),
                         serieExtraida,
                         seleccionCalidadActiva !== "OK");
@@ -784,7 +784,6 @@ function restaurarBotoneraInferior() {
     }
 }
 
-
 function gestionarBotonDinamico() {
     if (enModoDigitacion) {
         procesarLectura({ key: 'Enter' });
@@ -839,9 +838,9 @@ function alternarPausaLinea() {
         };
 
         historialLecturasPRD.unshift(registroPausa);
+        enviarAGoogleSheets(registroPausa);
         guardarEnMemoriaLocal();
         actualizarTablaVista();
-        enviarAGoogleSheets(registroPausa);
 
         if (btn) {
             btn.innerText = "⏸️ Pausa";
@@ -873,9 +872,9 @@ function solicitarAnulacion(idRegistro) {
       //  registro.estadoOrigen = "R";
       //  registro.estadoDestino = "ANULADO";
       //  registro.destino = "NULO"; // +String(idRegistro);
+        enviarAGoogleSheets(registro);
         guardarEnMemoriaLocal();
         actualizarTablaVista();
-        enviarAGoogleSheets(registro);
     }
     document.getElementById('btn-ok-base').focus();
 }
@@ -938,7 +937,6 @@ function actualizarTablaVista() {
         });
 
     // MODO 2: REPORTE DE SUBTOTALES ACUMULADOS EN PANTALLA
-        // MODO 2: REPORTE DE SUBTOTALES ACUMULADOS OPTIMIZADO PARA MÓVIL
     } else if (modoVistaActual === "subtotales") {
                 // DISTRIBUCIÓN ANTIVUELCO DE ANCHOS (TOTAL: 100%)
         thead.innerHTML = `
@@ -1022,29 +1020,25 @@ function enviarAGoogleSheets(objetoRegistro) {
             guardarEnMemoriaLocal();
             actualizarTablaVista(); // Cambia el reloj ⏳ por el emoji definitivo 🟢
             console.log("Sincronización exitosa para ID:", objetoRegistro.id);
-
-            // TRUCO INDUSTRIAL: Si este envío tuvo éxito, barremos la cola por si había registros antiguos atrapados
-            estaProcesandoCola = false;
-            reprocesarColaPendiente();
        // }
     })
     .catch(err => {
         console.error("Fallo de red en transmisión asíncrona. Se reintentará luego:", err);
         estaProcesandoCola = false;
     });
-            
+    estaProcesandoCola = false;
+    reprocesarColaPendiente();
 }
 
 // NUEVA FUNCIÓN: ESCANER DE HISTORIAL PARA IDENTIFICAR REGISTROS ATRAPADOS EN MODO AVIÓN
-function reprocesarColaPendiente() {
+async function reprocesarColaPendiente() {
     if (!navigator.onLine) return; // Sin internet no hacemos nada
-
     // SI EL SEMÁFORO ESTÁ EN ROJO (true), REBOTAMOS
     if (estaProcesandoCola) {
         console.log("🚦 Semáforo en ROJO: Esperando que termine el envío en curso...");
         return;
     }
-
+    await new Promise(resolve => setTimeout(resolve, 2000));
     // Buscamos registros que aún no se hayan sincronizado
     const registrosAtrapados = historialLecturasPRD.filter(reg => !reg.sincronizado);
 
@@ -1144,7 +1138,6 @@ function dispararCartelExito(textoorden, textosku, textoserie, esDefecto) {
 }
 
 // --- CAPTURADORES DE SENSORES (Simulan el toque de pantalla) ---
-
 function manejarInclinacionOperario(event) {
     if (!sensoresActivos) return;
 
@@ -1178,7 +1171,6 @@ function manejarGolpeOperario(event) {
     }
 }
 
-
 function pantallaVerdePresionada() {
     // 0. APAGADO QUIRÚRGICO: Lo primero es matar los sensores para liberar CPU inmediatamente
     if (sensoresActivos) {
@@ -1209,8 +1201,6 @@ function limpiarPantallaCompleta() {
         actualizarTablaVista();
     }
 }
-
-
 
 // Inicialización de la planta al cargar
 window.onload = function() {
