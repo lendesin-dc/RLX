@@ -1001,34 +1001,34 @@ function actualizarTablaVista() {
 }
 
 // 9. MOTOR ASÍNCRONO DE TRANSMISIÓN CON REINTENTO AUTOMÁTICO DE COLA
-function enviarAGoogleSheets(objetoRegistro) {
+async function enviarAGoogleSheets(objetoRegistro) {
     if (!navigator.onLine) {
         console.warn("Dispositivo sin red en este milisegundo. Registro guardado en cola local.");
         return;
     }
+    // 1. Bloqueamos el motor para evitar duplicados
     estaProcesandoCola = true;
-    fetch(URL_GOOGLE_APP, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify(objetoRegistro)
-    })
-   // .then (respuesta => respuesta.json())
-   // .then (datosNube => {
-    .then(() => {
-        // if (datosNube && datosNube.resultado === "ok") {
-            objetoRegistro.sincronizado = true;
-            guardarEnMemoriaLocal();
-            actualizarTablaVista(); // Cambia el reloj ⏳ por el emoji definitivo 🟢
-            console.log("Sincronización exitosa para ID:", objetoRegistro.sincronizado);
-       // }
-    })
-    .catch(err => {
+    try {
+        // 2. Con 'await' obligamos al código a esperar que termine la petición HTTP
+        await fetch(URL_GOOGLE_APP, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(objetoRegistro)
+        });
+        // 3. Como es 'no-cors', asumimos éxito si no entró al catch
+        objetoRegistro.sincronizado = true;
+        guardarEnMemoriaLocal();
+        actualizarTablaVista(); // Cambia el reloj ⏳ por el emoji definitivo 🟢
+        console.log("Sincronización exitosa para ID:", objetoRegistro.sincronizado);
+    } catch (err) {
         console.error("Fallo de red en transmisión asíncrona. Se reintentará luego:", err);
+    } finally {
+        // 4. El bloque 'finally' se ejecuta SIEMPRE (tanto si funcionó como si falló)
+        // Solo ahora que terminó el proceso, liberamos la bandera
         estaProcesandoCola = false;
-    });
-    estaProcesandoCola = false;
-    reprocesarColaPendiente();
+        reprocesarColaPendiente();
+    }
 }
 
 // NUEVA FUNCIÓN: ESCANER DE HISTORIAL PARA IDENTIFICAR REGISTROS ATRAPADOS EN MODO AVIÓN
