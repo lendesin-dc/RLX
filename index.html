@@ -1032,14 +1032,15 @@ async function enviarAGoogleSheets(objetoRegistro) {
 }
 
 // NUEVA FUNCIÓN: ESCANER DE HISTORIAL PARA IDENTIFICAR REGISTROS ATRAPADOS EN MODO AVIÓN
-async function reprocesarColaPendiente() {
+async function reprocesarColaPendiente() { // 1. Agregamos 'async' aquí
     if (!navigator.onLine) return; // Sin internet no hacemos nada
+    
     // SI EL SEMÁFORO ESTÁ EN ROJO (true), REBOTAMOS
     if (estaProcesandoCola) {
-        console.log("🚦 Semáforo en ROJO: Esperando que termine el envío en curso...");
+        console.log("⏳ Semáforo en ROJO: Esperando que termine el envío en curso...");
         return;
     }
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     // Buscamos registros que aún no se hayan sincronizado
     const registrosAtrapados = historialLecturasPRD.filter(reg => !reg.sincronizado);
 
@@ -1052,11 +1053,12 @@ async function reprocesarColaPendiente() {
         // Extraemos el último (siguiendo el flujo natural de tu tabla)
         const siguienteRegistro = registrosAtrapados[registrosAtrapados.length - 1];
 
-        // Lo mandamos a la red
-        enviarAGoogleSheets(siguienteRegistro);
+        // Lo mandamos a la red y ESPERAMOS a que termine antes de continuar
+        // Gracias a esto, el puntero se modificará a 'sincronizado = true' antes de la siguiente vuelta
+        await enviarAGoogleSheets(siguienteRegistro); 
     }
 }
-
+    
 // ESCUCHADORES NATIVOS DE HARDWARE: Detectan el milisegundo exacto en que quitas el modo avión
 window.addEventListener('online', () => {
     console.log("📡 Red restablecida en el dispositivo de planta. Activando vaciado de cola...");
