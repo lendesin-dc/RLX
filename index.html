@@ -867,18 +867,33 @@ function conmutarModoVista() {
 }
 
 function solicitarAnulacion(idRegistro) {
+    // 1. Buscamos el objeto en el historial usando su ID único
     const registro = historialLecturasPRD.find(item => item.id === idRegistro);
+    
     if (registro && !registro.esAnulado) {
+        // 2. Modificaciones al PUNTERO del objeto
         registro.esAnulado = true;
-      //  registro.estadoOrigen = "R";
-      //  registro.estadoDestino = "ANULADO";
-      //  registro.destino = "NULO"; // +String(idRegistro);
-        enviarAGoogleSheets(registro);
+        
+        // 🚨 CRUCIAL PARA MODO OFFLINE: 
+        // Forzamos sincronizado en false para que el filtro de la cola lo detecte.
+        // Agregamos 'tipoAccion' para que Google Sheets sepa qué hacer al recibirlo.
+        registro.sincronizado = false; 
+        registro.tipoAccion = "ANULAR"; 
+
+        // 3. Persistencia local inmediata e impacto en la interfaz
         guardarEnMemoriaLocal();
-        actualizarTablaVista();
+        actualizarTablaVista(); // Cambia el botón por el texto "ANULADO" azul
+
+        console.log(`Puntero marcado para anulación: ID ${idRegistro}. Despertando motor...`);
+
+        // 4. Centralizamos el envío a través del motor asíncrono en vez de disparar el fetch directo
+        reprocesarColaPendiente();
     }
+    
+    // Mantiene tu comportamiento original de usabilidad con el teclado
     document.getElementById('btn-ok-base').focus();
 }
+
 
 function actualizarTablaVista() {
     const thead = document.getElementById('tabla-encabezado');
@@ -1006,8 +1021,10 @@ async function enviarAGoogleSheets(objetoRegistro) {
         console.warn("Dispositivo sin red en este milisegundo. Registro guardado en cola local.");
         return;
     }
+
     // 1. Bloqueamos el motor para evitar duplicados
     estaProcesandoCola = true;
+
     try {
         // 2. Con 'await' obligamos al código a esperar que termine la petición HTTP
         await fetch(URL_GOOGLE_APP, {
@@ -1016,11 +1033,13 @@ async function enviarAGoogleSheets(objetoRegistro) {
             headers: { "Content-Type": "text/plain" },
             body: JSON.stringify(objetoRegistro)
         });
+
         // 3. Como es 'no-cors', asumimos éxito si no entró al catch
         objetoRegistro.sincronizado = true;
         guardarEnMemoriaLocal();
         actualizarTablaVista(); // Cambia el reloj ⏳ por el emoji definitivo 🟢
         console.log("Sincronización exitosa para ID:", objetoRegistro.sincronizado);
+
     } catch (err) {
         console.error("Fallo de red en transmisión asíncrona. Se reintentará luego:", err);
     } finally {
@@ -1040,7 +1059,7 @@ async function reprocesarColaPendiente() { // 1. Agregamos 'async' aquí
         console.log("⏳ Semáforo en ROJO: Esperando que termine el envío en curso...");
         return;
     }
-    await new Promise(resolve => setTimeout(resolve, 1000));
+
     // Buscamos registros que aún no se hayan sincronizado
     const registrosAtrapados = historialLecturasPRD.filter(reg => !reg.sincronizado);
 
@@ -1058,7 +1077,7 @@ async function reprocesarColaPendiente() { // 1. Agregamos 'async' aquí
         await enviarAGoogleSheets(siguienteRegistro); 
     }
 }
-    
+
 // ESCUCHADORES NATIVOS DE HARDWARE: Detectan el milisegundo exacto en que quitas el modo avión
 window.addEventListener('online', () => {
     console.log("📡 Red restablecida en el dispositivo de planta. Activando vaciado de cola...");
