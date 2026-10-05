@@ -618,8 +618,8 @@ function procesarLectura(evento) {
 
     // TRANSMISIÓN INMEDIATA A GOOGLE SHEETS
     // EMISIÓN DE AVISOS ACÚSTICOS INDUSTRIALES Y PANTALLA GIGANTE
-    historialLecturasPRD.unshift(nuevoRegistro);
     sonarBip750Hz();
+    historialLecturasPRD.unshift(nuevoRegistro);
     enviarAGoogleSheets(nuevoRegistro);
     guardarEnMemoriaLocal();
     dispararCartelExito(loteExtraido, skuExtraido + (seleccionCalidadActiva !== "OK" ? ` (${seleccionCalidadActiva})` : ""),
@@ -829,7 +829,7 @@ function alternarPausaLinea() {
             serie: "DETENCION",
             lote: "",
             estadoFinal: "PAUSA",
-            destino: "-",
+            destino: "",
             tiempoSegundos: segundosPausaMuerta,
             adicfalla: "-",
             adicrpto: "-",
