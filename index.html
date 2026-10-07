@@ -537,7 +537,7 @@ function procesarLectura(evento) {
     const skuExtraido = segmentos[0] || '-';
     const serieExtraida = segmentos[1] || '-';
     let loteExtraido = segmentos[2] || '-';  // puede ser una letra  A R E si pasó por bodega S en este caso se asignará como estadoOrdenFinal 
-    if ( loteExtraido.length < 3 ) { estadoOrdenFinal = loteExtraido; loteExtraido = ""; }
+  //  if ( loteExtraido.length < 3 ) { estadoOrdenFinal = loteExtraido; loteExtraido = ""; }
     let estadoOrdenFinal = seleccionCalidadActiva;   // es la botonera de produccion ok emb fuga
     let destinoDef = "";   // es la bodega B-01 por defecto o Z-RCHZ  Zona de Rechazo 
     if (seleccionCalidadActiva === "OK") { destinoDef = "B-01" } else { destinoDef = "Z-RCHZ"}
