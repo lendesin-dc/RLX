@@ -181,27 +181,27 @@
 
    <!-- PANEL DE CONTROL DE CALIDAD EN CUADRÍCULA ERGONÓMICA DE 3 COLUMNAS -->
 <div class="pareto-grid">
-    <button id="btn-ok-base" class="btn-prd ok-active" onclick="fijarEstadoCalidad('OK', this)">
+    <button id="btn-ok-base" class="btn-prd ok-active" onclick="fijarbotonEstado('OK', this)">
         <span class="icono">OK 🟢</span>
     <!--    <span>OK</span>  -->
     </button>
-    <button class="btn-prd" onclick="fijarEstadoCalidad('A-RQ', this)">
+    <button class="btn-prd" onclick="fijarbotonEstado('A-RQ', this)">
         <span class="icono">A-RQ ⚠️</span>
      <!--   <span>DD</span> -->
     </button>
-    <button class="btn-prd" onclick="fijarEstadoCalidad('GAS', this)">
+    <button class="btn-prd" onclick="fijarbotonEstado('GAS', this)">
         <span class="icono">GAS 💧</span>
      <!--   <span>FUGA</span> -->
     </button>
-    <button class="btn-prd" onclick="fijarEstadoCalidad('ELEC', this)">
+    <button class="btn-prd" onclick="fijarbotonEstado('ELEC', this)">
         <span class="icono">ELEC ⚡</span>
      <!--   <span>ELEC</span> -->
     </button>
-    <button class="btn-prd" onclick="fijarEstadoCalidad('MCHD', this)">
+    <button class="btn-prd" onclick="fijarbotonEstado('MCHD', this)">
         <span class="icono">MCHD ⚙️</span>
      <!--   <span>COMP</span> -->
     </button>
-    <button class="btn-prd" onclick="fijarEstadoCalidad('EMB', this)">
+    <button class="btn-prd" onclick="fijarbotonEstado('EMB', this)">
         <span class="icono">EMB 📦</span>
      <!--   <span>EMB</span> -->
     </button>
@@ -328,9 +328,9 @@
 // 0. IDENTIFICACION DE PUESTO DE TRABAJO
   // Esto lee automáticamente lo que esté después del "?" en la URL
 const urlParams = new URLSearchParams(window.location.search);
-const idPuesto = urlParams.get('puesto') || "LINEA-X";
-let idOrigen = urlParams.get('origen') || "B-J";
-let idEstadoOrigen = urlParams.get('estado') || "NOR";
+const urlPuesto = urlParams.get('puesto') || "LINEA-X";
+let urlOrigen = urlParams.get('origen') || "B-J";
+let urlEstadoOrigen = urlParams.get('estado') || "NOR";
 
 
 // 1. CONFIGURACIÓN DEL ENTORNO REMOTO DE GOOGLE SHEETS
@@ -344,27 +344,26 @@ var matrizGantt = [];
 // Función tradicional para descargar los datos de la hoja correspondiente
 function cargarMatrizGantt() {
   // Construimos la URL completa concatenando el idPuesto que usa tu app
-  var urlCompleta = URL_GANTT + idPuesto;
+  var urlCompleta = URL_GANTT + urlPuesto;
 
-  fetch(urlCompleta)
-    .then(function(respuesta) {
-      return respuesta.json();
-    })
-    .then(function(datos) {
-      matrizGantt = datos;
-      console.log("Matriz de validación cargada con éxito para: " + idPuesto);
-    })
-    .catch(function(error) {
-      console.error("Error al descargar la matriz GANTT: ", error);
-      // Opcional: Aquí podrías alertar sonoramente si la app arranca sin conexión
-    });
+   fetch(urlCompleta)
+        .then(function(respuesta) {
+        return respuesta.json();
+        })
+        .then(function(datos) {
+        matrizGantt = datos;
+        console.log("Matriz de validación cargada con éxito para: " + urlPuesto);
+        })
+        .catch(function(error) {
+        console.error("Error al descargar la matriz GANTT: ", error);
+        // Opcional: Aquí podrías alertar sonoramente si la app arranca sin conexión
+        alert("Error en carga de Gantt para: " + urlPuesto);
+        });
 }
 
 // Ejecutas esta función al cargar la página/app
 cargarMatrizGantt();
-// (Opcional) Puedes mostrarlo en pantalla para que el operario sepa en qué puesto está:
-document.getElementById("nombre-linea").innerText = " " + idPuesto;
-
+document.getElementById("nombre-linea").innerText = " " + urlPuesto;
 
 // MAPEO ERGONÓMICO DE ICONOS INDUSTRIALES PARA RENDERIZADO VISUAL
 const MAPA_ICONOS = {
@@ -378,8 +377,8 @@ const MAPA_ICONOS = {
 };
 
 // 2. VARIABLES DE CONTROL OPERACIONAL Y MOTOR DE TIEMPOS
-let seleccionCalidadActiva = "OK";
-let estadoCalidadPrevio = "OK";
+let botonActivo = "OK";
+let botonPrevio = "OK";
 let enModoDigitacion = false;
 let lineaEnPausa = false;
 let camaraActivaHardware = false;
@@ -398,14 +397,15 @@ let estadoSecuenciaActual = "BOTONERA";
 let ultimoMovimientoTiempo = 0;
 
 // Inicializadores de base de datos local en RAM/Session
-let historialLecturasPRD = JSON.parse(localStorage.getItem('historial_bodega_prd')) || [];
+let histLecturasPRD = JSON.parse(localStorage.getItem('historial_bodega_prd')) || [];
+let histRezagadosPRD = JSON.parse(localStorage.getItem('historial_rezagados_prd')) || [];
 let ultimoHitoTime = Date.now(); // Estampa del milisegundo exacto del hito anterior
 
 
 // 2.1 Boton del medio
 async function exportar() {
     // 1. Traer la base de datos local completa desde el localStorage
-    const datosRaw = localStorage.getItem('historial_bodega_prd');
+    const datosRaw = localStorage.getItem('historial_rezagados_prd');
 
     if (!datosRaw || datosRaw === "[]") {
         alert("No hay registros en el historial local para exportar.");
@@ -460,7 +460,7 @@ async function exportar() {
 
     const JtimestampStr = `${Janio}-${Jmes}-${Jdia}-${JhoraFormateada}`;
 
-    link.download = `Respaldo_${idPuesto}_${JtimestampStr}.xls`;
+    link.download = `Respaldo_${urlPuesto}_${JtimestampStr}.xls`;
 
     document.body.appendChild(link);
     link.click();
@@ -472,9 +472,9 @@ async function exportar() {
 // Cambiamos 'tablaHtml' por 'datosRaw' enviando el array original de la memoria
     const payload = {
         accion: "CORREO",
-        puesto: idPuesto,
+        puesto: urlPuesto,
         fecha: JtimestampStr,
-        datosRaw: historialLecturasPRD // <--- Aquí inyectamos la base de datos real
+        datosRaw: histRezagadosPRD // <--- Aquí inyectamos la base de datos real
         };
     try {
         fetch(URL_GOOGLE_APP, {
@@ -493,18 +493,18 @@ async function exportar() {
 
 
 // 3. CONTROL CENTRAL DE LA INTERFAZ Y PUESTOS (CEREBRO PRD)
-function fijarEstadoCalidad(codigo, boton) {
+function fijarbotonEstado(codigo, boton) {
     document.querySelectorAll('.btn-prd').forEach(b => {
         b.classList.remove('ok-active', 'pareto-active');
     });
 
-    seleccionCalidadActiva = codigo;
+    botonActivo = codigo;
     if (codigo === "OK") {
         boton.classList.add('ok-active');
     } else {
         boton.classList.add('pareto-active');
     }
-    console.log("Estado seleccionado listo para captura:", seleccionCalidadActiva);
+    console.log("Estado seleccionado listo para captura:", botonActivo);
 }
 
 // 4. PROCESADOR DE ENTRADA CENTRAL DE DATOS (BACKOFFICE DE LECTURA)
@@ -515,13 +515,13 @@ function procesarLectura(evento) {
 
     // EXCEPCIÓN DETECTADA: Si el resultado es NO OK (cámara cerrada o enter vacío)
     if (cadenaQR === "") {
-        console.log("Excepción: Captura vacía. Retornando a botón anterior:", estadoCalidadPrevio);
+        console.log("Excepción: Captura vacía. Retornando a botón anterior:", botonPrevio);
         restaurarBotoneraInferior();
 
         // Retornamos la interfaz exactamente al botón que tenía antes de abrir la cámara
         const botonAActivar = Array.from(document.querySelectorAll('.btn-opcion'))
-                                   .find(b => b.innerText.includes(estadoCalidadPrevio));
-        if (botonAActivar) fijarEstadoCalidad(estadoCalidadPrevio, botonAActivar);
+                                   .find(b => b.innerText.includes(botonPrevio));
+        if (botonAActivar) fijarbotonEstado(botonPrevio, botonAActivar);
         return;
     }
 
@@ -534,101 +534,128 @@ function procesarLectura(evento) {
     }
 
     const segmentos = cadenaQR.split('#');
-    const skuExtraido = segmentos[0] || '-';
-    const serieExtraida = segmentos[1] || '-';
-    let loteExtraido = segmentos[2] || '-';  // puede ser una letra  A R E si pasó por bodega S en este caso se asignará como estadoOrdenFinal 
-    let estadoOrdenFinal = seleccionCalidadActiva;   // es la botonera de produccion ok emb fuga
-    let destinoDef = "";   // es la bodega B-01 por defecto o Z-RCHZ  Zona de Rechazo 
-    if (seleccionCalidadActiva === "OK") { destinoDef = "B-01" } else { destinoDef = "Z-RCHZ"}
-    // VERIFICACIÓN DE REPETIDOS (RESTRICCIÓN DE MENOS DE 5 MINUTOS)
-
-    let IDORIGEN = idOrigen; // valor por defecto  B-J
-    let IDESTADOORIGEN = idEstadoOrigen; // valor por defecto   NOR
+    const skuLect = segmentos[0] || '-';
+    const serieLect = segmentos[1] || '-';
+    let loteLect = segmentos[2] || '-';  // puede ser una letra  A R E si pasó por bodega S en este caso se asignará como estadoOrdenFinal 
+    const cantRev = 0; // la primera vez que se revisa es un punto se agrega uno cada vez se coloca en columna falla
+    let estadoDestinoLect = botonActivo;   // es la botonera de produccion ok emb fuga
+    let destinoDef = "";   // destino definido es la bodega B-01 por defecto o Z-RCHZ  Zona de Rechazo 
+    if (botonActivo === "OK") { destinoDef = "B-01" } else { destinoDef = "Z-RCHZ"}
     
-  // --- INICIO DE TU NUEVA LÓGICA DE VALIDACIÓN MATRICIAL ---
-  // Buscamos la Orden de Compra del QR (loteExtraido) en la GANTT en coincidencia que es una fila que parte en cero ( A )
-  var coincidencia = matrizGantt.find(function(fila) {
-    // fila[1] corresponde a la columna B de la GANTT (Orden de Compra)
-    return fila[1].toString().trim() === loteExtraido.trim(); // si encuentra la O compra coincidencia lo trae
-  });
-  // Capturamos el elemento de texto de la Orden de Compra en tu cartel gigante
-  var elementoOCompraPantalla = document.getElementById("modal-orden");
+    var elementoOCompraPantalla = document.getElementById("modal-orden"); // cartel de aviso blanco si orden está en GANTT, rojo si no está
 
-  if (coincidencia) {   // coincidencia dieferente de vacio es verdadero
+    let IDORIGEN = urlOrigen; // valor por defecto  B-J
+    let IDESTADOORIGEN = urlEstadoOrigen; // valor por defecto   NOR
+    let IDCANTREV = 1; // despues se enriquece igual que los estados y origen de arriba parte en un punto
+
+  // --- ORIGEN SEGUN MATRIZ GANTT  ---
+  // Buscamos la Orden de Compra del QR (loteLect) en la GANTT 
+  var tieneGantt = matrizGantt.find(function(fila) {
+    // fila[1] corresponde a la columnas A y B de la GANTT (SKU y Orden de Compra ) que coinciden con contenido de cadenaQR  
+    return ( fila[1].toString().trim() === loteLect.trim() && fila[0].toString().trim() === skuLect.trim() ); // si encuentra la O compra coincidencia lo trae
+    });
+
+  if (tieneGantt) {   // coincidencia con la GANTT, diferente de vacio es verdadero
         // ¡CORRESPONDE! Enriquecemos trayendo Origen (col C / índice 2) y Estado Origen (col D / índice 3)
-        IDORIGEN = coincidencia[2];  // se usa de acuerdo a GANTT
-        IDESTADOORIGEN = coincidencia[3];  
+        IDORIGEN = tieneGantt[2];  // se usa de acuerdo a GANTT B-00 en la Gantt
+        IDESTADOORIGEN = tieneGantt[3];   // en la Gantt pondremos guión para el KIT
         // Forzamos letras BLANCAS en tu cartel de éxito 
         if (elementoOCompraPantalla) {
             elementoOCompraPantalla.style.color = "white";
             }
   } else {   // no hay coincidencia , no encuentra la orden en la GANTT
         //  Mantenemos los valores por defecto que venían de la URL
-        IDORIGEN = idOrigen;
-        IDESTADOORIGEN = idEstadoOrigen;
+        IDORIGEN = urlOrigen;
+        IDESTADOORIGEN = urlEstadoOrigen;
         // ALERTA VISUAL MÁXIMA: Las letras de la O.Compra pasan a ROJO en el cartel
         if (elementoOCompraPantalla) {
             elementoOCompraPantalla.style.color = "red";
             }
   }
-  // --- FIN DE LA LÓGICA DE VALIDACIÓN MATRICIAL ---
-  // Si está duplicado no se usa y pasa de largo y si el duplicado es porque se fue a Rechazo entonces se rescata desde rechazo 
-    const momentoActual = Date.now();
-    const registroDuplicado = historialLecturasPRD.find(item =>
-        item.serie === serieExtraida && item.sku === skuExtraido &&  !item.esAnulado
+    // --- FIN DE LA LÓGICA DE VALIDACIÓN MATRICIAL DEL ORIGEN SEGUN GANTT ---
+
+    // VERIFICACIÓN DE REPETIDOS (RESTRICCIÓN DE TURNO)
+    // Verificación de repetido en historialLecturaPRD en el turno, o que provienen de Rezagado leido al comenzar la aplicación.  
+    // Rezagado tiene elementos del historialLecturasPRD 
+    const regLeido = histLecturasPRD.find(item =>
+        item.qr === cadenaQR  &&  !item.esAnulado
         );
+    const indexRezagado = histRezagadosPRD.findIndex(item =>  // se rescata el index para hacerle un splice por haber sido usado
+        item.qr === cadenaQR && !item.esAnulado
+        );    
+                // hasta aqui registro leido puede estar tambien en rezagado porque no es un OK.
+    const momentoLect = Date.now(); 
 
-    if (registroDuplicado) {
-        const diferenciaMinutos = (momentoActual - registroDuplicado.id) / (1000 * 60);
-
-             if ( diferenciaMinutos < 2500 && registroDuplicado.estadoFinal === estadoOrdenFinal && registroDuplicado.estadoFinal === "OK") {
-                alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieExtraida}] ya fue registrada hace ${diferenciaMinutos.toFixed(1)} minutos.`);
+    if (regLeido) {
+        const deltaMinutos = (momentoLect - regLeido.id) / (1000 * 60);
+                    //  si registro leido es OK no puede tener otro OK, si registro leido no es ok, no puede ser el mismo no ok 
+             if ( (deltaMinutos < 660 && regLeido.estadoFinal === "OK") || regLeido.estadoFinal === estadoDestinoLect ) {
+                alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieLect}] ya fue registrada hace ${deltaMinutos.toFixed(1)} minutos.`);
                 input.value = "";
                 procesarLectura({ key: 'Enter' });
                 return
                 } else {
-                    IDORIGEN = registroDuplicado.destino; IDESTADOORIGEN = registroDuplicado.estadoFinal }
-        }
+                    IDORIGEN = regLeido.destino; IDESTADOORIGEN = regLeido.estadoFinal;
+                    IDCANTREV = regLeido.cantRev + 1;
+                    console.log(`FALLA suma ${IDCANTREV} revisiones.` );
+                 }
+        } 
 
-    // AUDITORÍA DE TIEMPOS MUERTOS Y PRODUCTIVIDAD (CÁLCULO EN SEGUNDOS PUROS)
-    const segundosPurosCiclo = Math.round((momentoActual - ultimoHitoTime) / 1000);
-    ultimoHitoTime = momentoActual; // Reseteo inmediato del hito para el siguiente ciclo
+    if ( indexRezagado !== -1 ) {
+            const regRezagado = histRezagadosPRD[indexRezagado];
+            if ( regRezagado.estadoFinal === estadoDestinoLect ) {
+            alert(`¡PRODUCTO REPITE FALLA!\n\nLa falla [${estadoDestinoLect}] ya fue registrada.`);
+            input.value = "";
+            procesarLectura({ key: 'Enter' });
+            return
+            } else {
+                IDORIGEN = regRezagado.destino; IDESTADOORIGEN = regRezagado.estadoFinal;
+                IDCANTREV = regRezagado.cantRev + 1;
+                histRezagadosPRD.splice(indexRezagado, 1);
+            }
+    }
+        
+    // AUDITORÍA DE TIEMPOS TAK Y PAUSAS (CÁLCULO EN SEGUNDOS )
+    const TiempoTak = Math.round((momentoLect - ultimoHitoTime) / 1000);
+    ultimoHitoTime = momentoLect; // Reseteo inmediato del hito para el siguiente ciclo
 
     // ARQUITECTURA DEL OBJETO DE DATOS
     const nuevoRegistro = {
-        id: momentoActual,  //col A
-        puesto: idPuesto,   //col B
+        id: momentoLect,  //col A
+        puesto: urlPuesto,   //col B
         dia: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),  // col C
         hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),  // col D
-        origen: IDORIGEN,  //col E  distintas bodegas de origen  ( parametro de URL )
-        estadoOrigen: IDESTADOORIGEN, // col F son letras A, E, R, S, DD, de logistica inversa o Nuevo, para revisar, reparar, completar(QR, otro) ( parametro de URL )
+        origen: IDORIGEN,  //col E  distintas bodegas de origen  ( parametro de la GANTT o del rezago )
+        estadoOrigen: IDESTADOORIGEN, // col F son NOR MUES RPRE QR EEE , otras reparaciones de la GANTT
         qr: cadenaQR, // col G
-        sku: skuExtraido, // col H
-        serie: serieExtraida, // col I
-        lote: loteExtraido, //  col J  Orden de Compra
-        estadoFinal: estadoOrdenFinal,   // col K puede ser una letra tipo( E R B ) o un texto alusivo a la revisión ok o fuga, elec, comp, emb, DD
+        sku: skuLect, // col H
+        serie: serieLect, // col I
+        lote: loteLect, //  col J  Orden de Compra
+        estadoFinal: estadoDestinoLect,   // col K puede ser una letra tipo( E R B ) o un texto alusivo a la revisión ok o fuga, elec, comp, emb, DD
         destino: destinoDef, //col L  una bodega como en la S, B-01 si revisión ok, Z-R si se encuentra defecto
-        tiempoSegundos: segundosPurosCiclo,  // col M tiempos entre revision
-        adicfalla: "-", // col N  columna reservada para cuando se ocupe en zona de reparacion Z-R ( parametro de URL ?)
+        tiempoSegundos: TiempoTak,  // col M tiempos entre revision
+        adicfalla: "-", // col N  columna reservada se usará para contar numero de reparaciones parametro del rezagado o lecturas previas)
         adicrpto: "-", // col O  columna reservada para cuando se ocupe en zona de reparacion Z-R  ( parametro de URL ?)
         sincronizado: false,  //col P
-        esAnulado: false  // col Q
+        esAnulado: false,  // col Q
+        cantRev: IDCANTREV
         };
 
     // TRANSMISIÓN INMEDIATA A GOOGLE SHEETS
     // EMISIÓN DE AVISOS ACÚSTICOS INDUSTRIALES Y PANTALLA GIGANTE
     sonarBip750Hz();
-    historialLecturasPRD.unshift(nuevoRegistro);
+    histLecturasPRD.unshift(nuevoRegistro);
     enviarAGoogleSheets(nuevoRegistro);
+    if ( botonActivo !== "OK" ) { histRezagadosPRD.unshift(nuevoRegistro) } ; 
     guardarEnMemoriaLocal();
-    dispararCartelExito(loteExtraido, skuExtraido + (seleccionCalidadActiva !== "OK" ? ` (${seleccionCalidadActiva})` : ""),
-                        serieExtraida,
-                        seleccionCalidadActiva !== "OK");
+    dispararCartelExito(loteLect, skuLect + (botonActivo !== "OK" ? ` (${botonActivo})` : ""),
+                        serieLect,
+                        botonActivo !== "OK");
 
     // FLUJO DE RETORNO EXCELENTE: Vuelve los botones a modo inicial (OK seleccionado)
     restaurarBotoneraInferior();
-    fijarEstadoCalidad('OK', document.getElementById('btn-ok-base'));
-    estadoCalidadPrevio = "OK";
+    fijarbotonEstado('OK', document.getElementById('btn-ok-base'));
+    botonPrevio = "OK";
 
     actualizarTablaVista();
     input.value = "";
@@ -641,7 +668,7 @@ let streamActivoBodega = null;
 
 async function simularToggleCamara() {
     // Al abrir guardamos en la memoria el botón que estaba activo
-    estadoCalidadPrevio = seleccionCalidadActiva;
+    botonPrevio = botonActivo;
 
     // Si la cámara ya está activa, el botón actúa para apagarla (Cancelar)
    // if (camaraActivaHardware) {
@@ -650,8 +677,8 @@ async function simularToggleCamara() {
    // }
     
     // Levantamos visualmente la ventana del escáner inyectando el visor dinámico si no existe
-    document.getElementById('escaneo-cartel-superior').innerHTML = `<span>${seleccionCalidadActiva}</span> <span>${
-        MAPA_ICONOS[seleccionCalidadActiva]}</span>`;
+    document.getElementById('escaneo-cartel-superior').innerHTML = `<span>${botonActivo}</span> <span>${
+        MAPA_ICONOS[botonActivo]}</span>`;
     document.getElementById('modal-escaneo-gigante').style.display = "flex";
 
 
@@ -797,6 +824,15 @@ function alternarPausaLinea() {
     const btn = document.getElementById('btn-pausa-dinamico');
     const capaPausa = document.getElementById('capa-pausa');
     const ahora = Date.now();
+    let HH = new Date();
+    HH.setHours(10,0,0,0);
+    HH10c00 = HH.getTime();
+    HH.setHours(10,10,0,0);
+    HH10c10 = HH.getTime();
+    HH.setHours(12,45,0,0);
+    HH12c45 = HH.getTime();
+    HH.setHours(13,15,0,0);
+    HH13c15 = HH.getTime();
 
     if (!lineaEnPausa) {
         // DETENCIÓN: Se calcula cuánto se trabajó en el SKU previo antes de congelar la línea
@@ -811,14 +847,23 @@ function alternarPausaLinea() {
         if (capaPausa) capaPausa.style.display = "flex";
     } else {
         // REANUDACIÓN: Calculamos los segundos exactos consumidos por el tiempo muerto
-        const segundosPausaMuerta = Math.round((ahora - ultimoHitoTime) / 1000);
+        let segundosPausaMuerta = Math.round((ahora - ultimoHitoTime) / 1000);
         ultimoHitoTime = ahora;
         lineaEnPausa = false;
+
+        let horamedia = Math.round((ahora + ultimoHitoTime) / 2 );
+        console.log(`valor horamedia ${horamedia}. valor ${HH10c00} hora 10 .${HH12c45}..` );
+        if ( (segundosPausaMuerta > 600) && (horamedia > HH10c00 ) && ( horamedia < HH10c10 )) 
+        { segundosPausaMuerta = segundosPausaMuerta - 600 };
+        if ( (segundosPausaMuerta > 1800) && (horamedia > HH12c45 ) && ( horamedia < HH13c15 ))
+        { segundosPausaMuerta = segundosPausaMuerta- 1800 };
+
+        console.log(`valor horamedia ${horamedia}. valor ${HH10c00} hora 10 .${HH12c45}..` );
 
         // Estructuramos la pausa de forma idéntica a un SKU de control para la base de datos
         const registroPausa = {
             id: ahora,
-            puesto: idPuesto,
+            puesto: urlPuesto,
             dia: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }),
             hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
             origen: "B-J",
@@ -833,11 +878,12 @@ function alternarPausaLinea() {
             adicfalla: "-",
             adicrpto: "-",
             sincronizado: false,
-            esAnulado: false
+            esAnulado: false,
+            cantRev: 0
 
         };
 
-        historialLecturasPRD.unshift(registroPausa);
+        histLecturasPRD.unshift(registroPausa);
         enviarAGoogleSheets(registroPausa);
         guardarEnMemoriaLocal();
         actualizarTablaVista();
@@ -867,7 +913,7 @@ function conmutarModoVista() {
 
 function solicitarAnulacion(idRegistro) {
     // 1. Buscamos el objeto en el historial usando su ID único
-    const registro = historialLecturasPRD.find(item => item.id === idRegistro);
+    const registro = histLecturasPRD.find(item => item.id === idRegistro);
     
     if (registro && !registro.esAnulado) {
         // 2. Modificaciones al PUNTERO del objeto
@@ -878,7 +924,12 @@ function solicitarAnulacion(idRegistro) {
         // Agregamos 'tipoAccion' para que Google Sheets sepa qué hacer al recibirlo.
         registro.sincronizado = false; 
         registro.tipoAccion = "ANULAR"; 
-
+        if ( registro.estadoFinal !== "OK" ) {
+            const indexRez = histRezagadosPRD.findIndex(itemRez =>  // se rescata el index para hacerle un splice por haber sido usado
+            itemRez.id === idRegistro );
+            console.log( `Puntero indexRez  ${indexRez} splice en Rezago.` );        
+            if ( indexRez !== -1 ) { histRezagadosPRD.splice(indexRez, 1)};
+        }
         // 3. Persistencia local inmediata e impacto en la interfaz
         guardarEnMemoriaLocal();
         actualizarTablaVista(); // Cambia el botón por el texto "ANULADO" azul
@@ -912,7 +963,7 @@ function actualizarTablaVista() {
         `;
         tbody.innerHTML = "";
 
-        historialLecturasPRD.forEach(reg => {
+        histLecturasPRD.forEach(reg => {
             const fila = document.createElement('tr');
 
             // Colores suaves de fondo según el tipo de registro
@@ -968,7 +1019,7 @@ function actualizarTablaVista() {
 
         const agrupadoSKU = {};
 
-        historialLecturasPRD.forEach(reg => {
+        histLecturasPRD.forEach(reg => {
             const skuClave = reg.sku ? String(reg.sku).trim() : "ERROR";
             if (!agrupadoSKU[skuClave]) {
                 agrupadoSKU[skuClave] = {
@@ -1060,7 +1111,7 @@ async function reprocesarColaPendiente() { // 1. Agregamos 'async' aquí
     }
 
     // Buscamos registros que aún no se hayan sincronizado
-    const registrosAtrapados = historialLecturasPRD.filter(reg => !reg.sincronizado);
+    const registrosAtrapados = histLecturasPRD.filter(reg => !reg.sincronizado);
 
     if (registrosAtrapados.length > 0) {
         // PUSIMOS EL SEMÁFORO EN ROJO (Bloqueo industrial)
@@ -1213,13 +1264,16 @@ function pantallaVerdePresionada() {
 }
 
 function guardarEnMemoriaLocal() {
-    localStorage.setItem('historial_bodega_prd', JSON.stringify(historialLecturasPRD));
+    localStorage.setItem('historial_bodega_prd', JSON.stringify(histLecturasPRD));
+    localStorage.setItem('historial_rezagados_prd', JSON.stringify(histRezagadosPRD))
 }
 
 function limpiarPantallaCompleta() {
     if(confirm("¿Desea limpiar la sesión actual del panel?\n(Los tiempos guardados en Google Sheets no se borrarán)")) {
-        historialLecturasPRD = [];
+        histLecturasPRD = [];
         localStorage.removeItem('historial_bodega_prd');
+        histRezagadosPRD = [];
+        localStorage.removeItem('historial_rezagados_prd');
         ultimoHitoTime = Date.now();
         actualizarTablaVista();
     }
