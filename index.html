@@ -430,6 +430,7 @@ let ultimoMovimientoTiempo = 0;
 // Inicializadores de base de datos local en RAM/Session
 let histLecturasPRD = JSON.parse(localStorage.getItem('historial_bodega_prd')) || [];
 let histRezagadosPRD = JSON.parse(localStorage.getItem('historial_rezagados_prd')) || [];
+let histPausasPRD = JSON.parse(localStorage.getItem('historial_pausas_prd')) || [];
 let ultimoHitoTime = Date.now(); // Estampa del milisegundo exacto del hito anterior
 
 
@@ -505,7 +506,8 @@ async function exportar() {
         accion: "CORREO",
         puesto: urlPuesto,
         fecha: JtimestampStr,
-        datosRaw: histRezagadosPRD // <--- Aquí inyectamos la base de datos real
+        datosRaw: histRezagadosPRD, 
+        datosPausas : histPausasPRD
         };
     try {
         fetch(URL_GOOGLE_APP, {
@@ -915,6 +917,7 @@ function alternarPausaLinea() {
         };
 
         histLecturasPRD.unshift(registroPausa);
+        histPausasPRD.unshift(RegistroPausa);
         enviarAGoogleSheets(registroPausa);
         guardarEnMemoriaLocal();
         actualizarTablaVista();
@@ -1296,7 +1299,8 @@ function pantallaVerdePresionada() {
 
 function guardarEnMemoriaLocal() {
     localStorage.setItem('historial_bodega_prd', JSON.stringify(histLecturasPRD));
-    localStorage.setItem('historial_rezagados_prd', JSON.stringify(histRezagadosPRD))
+    localStorage.setItem('historial_rezagados_prd', JSON.stringify(histRezagadosPRD));
+    localStorage.setItem('historial_pausas_prd', JSON.stringify(histPausasPRD))
 }
 
 function limpiarPantallaCompleta() {
@@ -1305,7 +1309,10 @@ function limpiarPantallaCompleta() {
         localStorage.removeItem('historial_bodega_prd');
         histRezagadosPRD = [];
         localStorage.removeItem('historial_rezagados_prd');
+        histPausasPRD = [];
+        localStorage.removeItem('historial_pausas_prd');
         ultimoHitoTime = Date.now();
+
         actualizarTablaVista();
     }
 }
