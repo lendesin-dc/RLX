@@ -186,7 +186,7 @@
     <!--    <span>OK</span>  -->
     </button>
     <button class="btn-prd" onclick="fijarbotonEstado('A-RQ', this)">
-        <span class="icono">A-RQ ⚠️</span>
+        <span class="icono">A-RQ 🔨</span>
      <!--   <span>DD</span> -->
     </button>
     <button class="btn-prd" onclick="fijarbotonEstado('GAS', this)">
@@ -338,6 +338,35 @@ const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbwgXz11ga0JPKWNq
 
 const URL_GANTT = "https://script.google.com/macros/s/AKfycbxoDJlOxRApjJQHiODdqQR-7hNx6zBAe2p6hG23pgTMB_eKI29Azy7caV9Vk6Cc7fU/exec?puesto=";
 
+const URL_REZAGADOS = "https://script.google.com/macros/s/AKfycbzB0Gnrct5gcKaA_QaBGk8Ztfk5cinGVvxR2qRe5SAiH6oIhjL0yI5_ey3rmKQhqJRO/exec?accion=rezagados"
+
+
+function sincronizarRezagadosAlInicio() {
+  // Construimos la URL apuntando a la acción del script
+  var urlCompleta = URL_REZAGADOS;
+  
+  fetch(urlCompleta)
+    .then(function(respuesta) {
+      return respuesta.json(); // Parsea el JSON que envió el .gs
+    })
+    .then(function(datosJSON) {
+      // 1. Asignamos los datos directamente a tu variable en RAM
+      histRezagadosPRD = datosJSON;
+      
+      // 2. Lo respaldamos inmediatamente en la memoria física del navegador (Session/Local)
+      localStorage.setItem('historial_rezagados_prd', JSON.stringify(histRezagadosPRD));
+      
+      console.log("HistorialRezagadosPRD sincronizado con éxito. Total registros: " + histRezagadosPRD.length);
+      
+      // Opcional: Si tienes una función para redibujar la interfaz de la pistola, llámala aquí
+      // actualizarPantallaPistola();
+    })
+    .catch(function(error) {
+      console.error("Error crítico al recuperar el JSON de rezagados: ", error);
+      alert("No se pudo cargar la lista de rezagados al inicio del turno.");
+    });
+}
+
 // Variable global para guardar las Órdenes de Compra válidas de la línea
 var matrizGantt = []; 
 
@@ -362,18 +391,20 @@ function cargarMatrizGantt() {
 }
 
 // Ejecutas esta función al cargar la página/app
+sincronizarRezagadosAlInicio();
 cargarMatrizGantt();
 document.getElementById("nombre-linea").innerText = " " + urlPuesto;
 
 // MAPEO ERGONÓMICO DE ICONOS INDUSTRIALES PARA RENDERIZADO VISUAL
 const MAPA_ICONOS = {
-  "OK": "🟢",
-  "A-RQ": "⚠️",
-  "GAS": "💧",
-  "ELEC": "⚡",
-  "MCHD": "⚙️",
-  "EMB": "📦",
-  "PAUSA": "⏸️"
+  "OK": "&#128994;",     // 🟢
+  "A-RQ": "&#128296;",      // 🔨 "&#128296;" 
+  "GAS": "&#128167;",     // 💧
+  "ELEC": "&#9889;",      // ⚡
+  "MCHD": "&#9881;",      // ⚙️
+  "EMB": "&#128230;",     // 📦
+  "PAUSA": "&#9208;",     // ⏸️
+  "PELIGRO": "&#9888;" //  ⚠️ "&#9888;"
 };
 
 // 2. VARIABLES DE CONTROL OPERACIONAL Y MOTOR DE TIEMPOS
@@ -387,7 +418,7 @@ let analisisEnProgreso = false;
 let estaProcesandoCola = false;
 
 // Constantes globales de logica y calibración (las que probaste en tu medidor)
-const UMBRAL_GOLPE = 16;
+const UMBRAL_GOLPE = 15;
 const UMBRAL_INCLINACION = 46;
 
 let sensoresActivos = false;
