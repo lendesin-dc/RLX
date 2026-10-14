@@ -499,7 +499,8 @@ async function exportar() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    // --- NUEVA LÓGICA: ENVÍO DEL CONTENIDO AL CORREO VÍA WEB APP ---
+    // --- NUEVO  CONTENIDO AL CORREO VÍA WEB APP ---
+var matrizSubtotales = obtenerMatrizSubtotalesJSON();
 
 // Cambiamos 'tablaHtml' por 'datosRaw' enviando el array original de la memoria
     const payload = {
@@ -507,7 +508,8 @@ async function exportar() {
         puesto: urlPuesto,
         fecha: JtimestampStr,
         datosRaw: histRezagadosPRD, 
-        datosPausas : histPausasPRD
+        datosPausas : histPausasPRD,
+        resumen: matrizSubtotales  // <--- ¡AQUÍ ENTRA LA MAGIA AUTOMÁTICA!        
         };
     try {
         fetch(URL_GOOGLE_APP, {
@@ -524,6 +526,45 @@ async function exportar() {
         }
 }
 
+function obtenerMatrizSubtotalesJSON() {
+  const agrupadoSKU = {};
+  
+  // Tu misma lógica exacta de barrido sobre histLecturasPRD
+  histLecturasPRD.forEach(reg => {
+    const skuClave = reg.sku ? String(reg.sku).trim() : "ERROR";
+    if (!agrupadoSKU[skuClave]) {
+      agrupadoSKU[skuClave] = {
+        sku: skuClave,
+        validos: 0,
+        incidencias: 0,
+        segundosAcumulados: 0
+      };
+    }
+    
+    if (!reg.esAnulado) {
+      if (reg.estadoFinal === "OK") agrupadoSKU[skuClave].validos++;
+      else agrupadoSKU[skuClave].incidencias++;
+      
+      if ((reg.tiempoSegundos || 0) <= 7200) {
+        agrupadoSKU[skuClave].segundosAcumulados += (reg.tiempoSegundos || 0);
+      }
+    }
+  });
+  
+  // Convertimos el objeto agrupado al formato de array limpio para el correo
+  return Object.values(agrupadoSKU).map(item => {
+    const totalItems = item.validos + item.incidencias;
+    const minutosDecimales = (item.segundosAcumulados / 60).toFixed(1);
+    
+    return {
+      "producto": item.sku,
+      "validos": item.validos,
+      "fallados": item.incidencias,
+      "tiempo": minutosDecimales + " min",
+      "total": totalItems
+    };
+  });
+}
 
 // 3. CONTROL CENTRAL DE LA INTERFAZ Y PUESTOS (CEREBRO PRD)
 function fijarbotonEstado(codigo, boton) {
@@ -862,10 +903,6 @@ function alternarPausaLinea() {
     HH10c00 = HH.getTime();
     HH.setHours(10,10,0,0);
     HH10c10 = HH.getTime();
-    HH.setHours(12,45,0,0);
-    HH12c45 = HH.getTime();
-    HH.setHours(13,15,0,0);
-    HH13c15 = HH.getTime();
 
     if (!lineaEnPausa) {
         // DETENCIÓN: Se calcula cuánto se trabajó en el SKU previo antes de congelar la línea
@@ -883,15 +920,6 @@ function alternarPausaLinea() {
         let segundosPausaMuerta = Math.round((ahora - ultimoHitoTime) / 1000);
         ultimoHitoTime = ahora;
         lineaEnPausa = false;
-
-        let horamedia = Math.round((ahora + ultimoHitoTime) / 2 );
-        console.log(`valor horamedia ${horamedia}. valor ${HH10c00} hora 10 .${HH12c45}..` );
-        if ( (segundosPausaMuerta > 600) && (horamedia > HH10c00 ) && ( horamedia < HH10c10 )) 
-        { segundosPausaMuerta = segundosPausaMuerta - 600 };
-        if ( (segundosPausaMuerta > 1800) && (horamedia > HH12c45 ) && ( horamedia < HH13c15 ))
-        { segundosPausaMuerta = segundosPausaMuerta- 1800 };
-
-        console.log(`valor horamedia ${horamedia}. valor ${HH10c00} hora 10 .${HH12c45}..` );
 
         // Estructuramos la pausa de forma idéntica a un SKU de control para la base de datos
         const registroPausa = {
@@ -1038,7 +1066,6 @@ function actualizarTablaVista() {
 
     // MODO 2: REPORTE DE SUBTOTALES ACUMULADOS EN PANTALLA
     } else if (modoVistaActual === "subtotales") {
-                // DISTRIBUCIÓN ANTIVUELCO DE ANCHOS (TOTAL: 100%)
         thead.innerHTML = `
             <tr>
                 <th style="width: 25%; text-align: left;">Producto</th>
@@ -1048,11 +1075,8 @@ function actualizarTablaVista() {
                 <th style="width: 20%; text-align: center;">Total</th>
             </tr>
         `;
-
         tbody.innerHTML = "";
-
         const agrupadoSKU = {};
-
         histLecturasPRD.forEach(reg => {
             const skuClave = reg.sku ? String(reg.sku).trim() : "ERROR";
             if (!agrupadoSKU[skuClave]) {
@@ -1073,15 +1097,12 @@ function actualizarTablaVista() {
                 }
             }
         });
-
         Object.values(agrupadoSKU).forEach(item => {
             const fila = document.createElement('tr');
             const totalItems = item.validos + item.incidencias;
-
             // Conversión matemática ergonómica a minutos con un decimal
             const minutosDecimales = (item.segundosAcumulados / 60).toFixed(1);
             const tiempoOperadorTexto = `${minutosDecimales} min`;
-
             fila.innerHTML = `
                 <td style="font-size: 1.0rem; text-align: left;"><strong style="color: #1e3a8a;">${item.sku}</strong></td>
                 <td style="text-align: center; color: #16a34a; font-weight: bold; font-size: 1.1rem;">${item.validos} u.</td>
@@ -1122,7 +1143,7 @@ async function enviarAGoogleSheets(objetoRegistro) {
         objetoRegistro.sincronizado = true;
         guardarEnMemoriaLocal();
         actualizarTablaVista(); // Cambia el reloj ⏳ por el emoji definitivo 🟢
-        console.log("Sincronización exitosa para ID:", objetoRegistro.sincronizado);
+        console.log("Sincronización exitosa para ID:", objetoRegistro.id);
 
     } catch (err) {
         console.error("Fallo de red en transmisión asíncrona. Se reintentará luego:", err);
@@ -1130,6 +1151,7 @@ async function enviarAGoogleSheets(objetoRegistro) {
         // 4. El bloque 'finally' se ejecuta SIEMPRE (tanto si funcionó como si falló)
         // Solo ahora que terminó el proceso, liberamos la bandera
         estaProcesandoCola = false;
+        sonarBip750Hz();
         reprocesarColaPendiente();
     }
 }
