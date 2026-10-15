@@ -391,7 +391,6 @@ function cargarMatrizGantt() {
 }
 
 // Ejecutas esta función al cargar la página/app
-sincronizarRezagadosAlInicio();
 cargarMatrizGantt();
 document.getElementById("nombre-linea").innerText = " " + urlPuesto;
 
@@ -717,7 +716,7 @@ function procesarLectura(evento) {
 
     // TRANSMISIÓN INMEDIATA A GOOGLE SHEETS
     // EMISIÓN DE AVISOS ACÚSTICOS INDUSTRIALES Y PANTALLA GIGANTE
-    sonarBip750Hz();
+    sonarBip750Hz("880","0.2");
     histLecturasPRD.unshift(nuevoRegistro);
     enviarAGoogleSheets(nuevoRegistro);
     if ( botonActivo !== "OK" ) { histRezagadosPRD.unshift(nuevoRegistro) } ; 
@@ -1151,7 +1150,7 @@ async function enviarAGoogleSheets(objetoRegistro) {
         // 4. El bloque 'finally' se ejecuta SIEMPRE (tanto si funcionó como si falló)
         // Solo ahora que terminó el proceso, liberamos la bandera
         estaProcesandoCola = false;
-        sonarBip750Hz();
+        sonarBip750Hz("587","0.3");
         reprocesarColaPendiente();
     }
 }
@@ -1192,7 +1191,7 @@ window.addEventListener('online', () => {
 
 // 10. UTILIDADES INDUSTRIALES (AUDIO Y LIMPIEZA)
 let miAudioContext = null;
-function sonarBip750Hz() {
+function sonarBip750Hz(frec, dur) {
     try {
         if (!miAudioContext) miAudioContext = new (window.AudioContext || window.webkitAudioContext)();
         if (miAudioContext.state === 'suspended') miAudioContext.resume();
@@ -1203,15 +1202,15 @@ function sonarBip750Hz() {
         gain.connect(miAudioContext.destination);
 
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, miAudioContext.currentTime); // Tono industrial limpio
+        osc.frequency.setValueAtTime(frec, miAudioContext.currentTime); // Tono industrial limpio
         gain.gain.setValueAtTime(0.9, miAudioContext.currentTime);
 
         osc.start();
-        osc.stop(miAudioContext.currentTime + 0.25);
+        osc.stop(miAudioContext.currentTime + Number(dur) );
 
           // EFECTO GURÚ: Hacemos que el celular vibre para avisar al operario con guantes
         if ('vibrate' in navigator) {
-            navigator.vibrate(120); // Una vibración corta y firme de confirmación
+            navigator.vibrate(frec/7); // Una vibración corta y firme de confirmación
         }
 
     } catch (e) { console.error("Audio bloqueado por navegador:", e); }
@@ -1333,18 +1332,38 @@ function limpiarPantallaCompleta() {
         localStorage.removeItem('historial_rezagados_prd');
         histPausasPRD = [];
         localStorage.removeItem('historial_pausas_prd');
+        matrizGantt = []; 
+        cargarMatrizGantt(); 
         ultimoHitoTime = Date.now();
-
+        sincronizarRezagadosAlInicio();
         actualizarTablaVista();
+
     }
 }
 
 // Inicialización de la planta al cargar
 window.onload = function() {
-    actualizarTablaVista();
-    const input = document.getElementById('txt-lector');
-   // if (input) input.focus();
+  
+  // 🔒 EL CANDADO EXCLUSIVO PARA REZAGADOS:
+  var localRezagados = localStorage.getItem('historial_rezagados_prd');
+  
+  if (localRezagados !== null && localRezagados !== undefined) {
+    // Si el navegador se cerró o se refrescó, recuperamos el avance del operario desde el disco
+    histRezagadosPRD = JSON.parse(localRezagados);
+    console.log("Rezagados recuperados de memoria local. No se consulta al servidor.");
+  } else {
+    // Si la memoria está totalmente limpia (porque se apretó limpiar pantalla completa),
+    // recién ahí viaja a Google Sheets a buscar la lista inicial
+    console.log("Memoria limpia. Descargando rezagados iniciales desde el servidor...");
+    sincronizarRezagadosAlInicio();
+  }
+
+  // Continuamos con el comportamiento normal de tu aplicación
+  actualizarTablaVista();
+  const input = document.getElementById('txt-lector');
+//  if (input) input.focus();
 };
+
 </script>
 </body>
 </html>
