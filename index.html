@@ -554,45 +554,55 @@ var matrizSubtotales = obtenerMatrizSubtotalesJSON();
 }
 
 function obtenerMatrizSubtotalesJSON() {
-  const agrupadoSKU = {};
-  
-  // Tu misma lógica exacta de barrido sobre histLecturasPRD
-  histLecturasPRD.forEach(reg => {
-    const skuClave = reg.sku ? String(reg.sku).trim() : "ERROR";
-    if (!agrupadoSKU[skuClave]) {
-      agrupadoSKU[skuClave] = {
-        sku: skuClave,
-        validos: 0,
-        incidencias: 0,
-        segundosAcumulados: 0
-      };
-    }
-    
-    if (!reg.esAnulado) {
-      if (reg.estadoFinal === "OK") agrupadoSKU[skuClave].validos++;
-      else agrupadoSKU[skuClave].incidencias++;
-      
-      if ((reg.tiempoSegundos || 0) <= 7200) {
-        agrupadoSKU[skuClave].segundosAcumulados += (reg.tiempoSegundos || 0);
-      }
-    }
-  });
-  
+    const agrupadoSKU = {};
+
+    histLecturasPRD.forEach(reg => {
+        const skuClave = reg.sku ? String(reg.sku).trim() : "ERROR";
+        if (!agrupadoSKU[skuClave]) {
+            agrupadoSKU[skuClave] = {
+                sku: skuClave,
+                validosDirectos: 0,     // <--- NUEVA COLUMNA 1: Aprobados en 1ª revisión
+                validosRecuperados: 0,  // <--- NUEVA COLUMNA 2: Aprobados en 2ª o más rev.
+                incidencias: 0,
+                segundosAcumulados: 0
+            };
+        }
+
+        if (!reg.esAnulado) {
+            // CONDICIÓN DIVIDIDA: Evaluamos si es OK y miramos su historial de revisiones
+            if (reg.estadoFinal === "OK") {
+                if ((reg.cantRev || 1) === 1) {
+                    agrupadoSKU[skuClave].validosDirectos++;     // Suma a la primera revisión
+                } else {
+                    agrupadoSKU[skuClave].validosRecuperados++;  // Suma a los recuperados (2ª o más)
+                }
+            } else {
+                agrupadoSKU[skuClave].incidencias++;
+            }
+
+            // Tu lógica exacta de la cuncuna de tiempos se mantiene 100% idéntica y agrupada por SKU
+            if ((reg.tiempoSegundos || 0) <= 7200) {
+                agrupadoSKU[skuClave].segundosAcumulados += (reg.tiempoSegundos || 0);
+            }
+        }
+    });
+
+   // ... (Tu código posterior para convertir el objeto agrupadoSKU en el array final resumido)
   // Convertimos el objeto agrupado al formato de array limpio para el correo
   return Object.values(agrupadoSKU).map(item => {
-    const totalItems = item.validos + item.incidencias;
+    const totalItems = item.validosDirectos + item.validosRecuperados + item.incidencias;
     const minutosDecimales = (item.segundosAcumulados / 60).toFixed(1);
     
     return {
       "producto": item.sku,
-      "validos": item.validos,
+      "validosDirectos": item.validosDirectos,
+      "validosRecuperados": item.validosRecuperados,
       "fallados": item.incidencias,
       "tiempo": minutosDecimales + " min",
       "total": totalItems
     };
   });
 }
-
 // 3. CONTROL CENTRAL DE LA INTERFAZ Y PUESTOS (CEREBRO PRD)
 function fijarbotonEstado(codigo, boton) {
     document.querySelectorAll('.btn-prd').forEach(b => {
