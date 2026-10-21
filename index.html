@@ -296,6 +296,34 @@
     </button>
 </div>
 
+<!-- Modal Gigante para el Modo Captura de Evidencia Manual (Foto Primero) -->
+<div id="modal-evidencia-gigante" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(100, 70, 70, 0.9); z-index: 99999; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 30px; box-sizing: border-box;">
+    
+    <!-- ARRIBA: Cartel Dinámico de Selección Activa -->
+    <div id="evidencia-cartel-superior" style="background: #0a3ce0c7; color: white; padding: 14px 40px; margin-bottom: 40px; border-radius: 6px; font-weight: bold; font-size: 1.4rem; text-transform: uppercase; box-shadow: 0 4px 15px rgba(255,255,255,0.1); display: flex; align-items: center; gap: 15px;">
+        <!-- Se llena dinámicamente -->
+    </div>
+
+    <!-- AL MEDIO: Contenedor del stream de video de evidencia -->
+    <div style="width:320px; height:320px; border:4px dashed #28a745; border-radius:12px; overflow:hidden; background:#000; position:relative;">
+        <video id="video-evidencia-stream" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+        <!--div style="position:absolute; top:50%; left:10%; width:80%; height:2px; background:rgba(40,167,69,0.8); box-shadow:0 0 4px #28a745; pointer-events:none;"></div-->
+    </div>
+
+    <!-- ABAJO: Botonera de Control de Evidencia -->
+    <div style="width: 100%; max-width: 400px; margin-top: 40px; padding: 0 20px; box-sizing: border-box;">
+        <!-- BOTÓN PRINCIPAL VERDE -->
+        <button onclick="confirmarYCapturarFotoLocal()" style="width: 100%; padding: 18px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 1.5rem; font-weight: bold; cursor: pointer; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(40,167,69,0.3);">
+            📸 Tomar Foto y Continuar
+        </button>
+        
+        <!-- BOTÓN PARA ANULAR / CANCELAR -->
+        <button onclick="apagarCamaraHardwareEvidencia()" style="width: 100%; padding: 12px; background: #dc3545; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; opacity: 0.8;">
+            ✕ Cancelar Evidencia
+        </button>
+    </div>
+</div>
+
 <!-- VENTANA EMERGENTE GIGANTE: ANUNCIOS DE REVISIÓN -->
 <div id="modal-exito" onclick="pantallaVerdePresionada()" class="modal-exito">
 
@@ -331,7 +359,7 @@ const urlParams = new URLSearchParams(window.location.search);
 const urlPuesto = urlParams.get('puesto') || "LINEA-X";
 let urlOrigen = urlParams.get('origen') || "B-J";
 let urlEstadoOrigen = urlParams.get('estado') || "NOR";
-
+let fotoEvidenciaBase64 = "";
 
 // 1. CONFIGURACIÓN DEL ENTORNO REMOTO DE GOOGLE SHEETS
 const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbwgXz11ga0JPKWNq98gkaXn0t-N_yO4ZcMgD15Y3V3pIfnau42443kooNknmoFRFZBf/exec";
@@ -580,12 +608,26 @@ function fijarbotonEstado(codigo, boton) {
     console.log("Estado seleccionado listo para captura:", botonActivo);
 }
 
+function fijarbotonEstadonuevo(codigo, boton) {
+ document.querySelectorAll('.btn-prd').forEach(b => {
+ b.classList.remove('ok-active', 'pareto-active');
+ });
+ botonActivo = codigo;
+ if (codigo === "OK") {
+ boton.classList.add('ok-active');
+ } else {
+ boton.classList.add('pareto-active');
+ // --- NUEVO: Si selecciona una incidencia, capturamos la foto ANTES de escanear ---
+ simularToggleCamaraEvidencia();
+ }
+ console.log("Estado seleccionado listo para captura:", botonActivo);
+}
+
 // 4. PROCESADOR DE ENTRADA CENTRAL DE DATOS (BACKOFFICE DE LECTURA)
 function procesarLectura(evento) {
     if (evento.key !== 'Enter') return;
     const input = document.getElementById('txt-lector');
     const cadenaQR = input.value.trim();
-
     // EXCEPCIÓN DETECTADA: Si el resultado es NO OK (cámara cerrada o enter vacío)
     if (cadenaQR === "") {
         console.log("Excepción: Captura vacía. Retornando a botón anterior:", botonPrevio);
@@ -597,7 +639,6 @@ function procesarLectura(evento) {
         if (botonAActivar) fijarbotonEstado(botonPrevio, botonAActivar);
         return;
     }
-
     // VERIFICACIÓN Y TRADUCCIÓN DE FORMATO DE BODEGA
     if (!cadenaQR.includes('#')) {
         alert("¡CÓDIGO NO VÁLIDO!\n\nAl formato le falta el separador (#). Pruebe de nuevo.");
@@ -605,7 +646,6 @@ function procesarLectura(evento) {
         procesarLectura({ key: 'Enter' }); // Fuerza el disparo de retorno por excepción
         return;
     }
-
     const segmentos = cadenaQR.split('#');
     const skuLect = segmentos[0] || '-';
     const serieLect = segmentos[1] || '-';
@@ -711,9 +751,13 @@ function procesarLectura(evento) {
         adicrpto: "-", // col O  columna reservada para cuando se ocupe en zona de reparacion Z-R  ( parametro de URL ?)
         sincronizado: false,  //col P
         esAnulado: false,  // col Q
-        cantRev: IDCANTREV
+        cantRev: IDCANTREV,
+        urlImagen: "", // Se procesará en la Web App de Google
+        // --- NUEVO: Absorbe de forma limpia la foto que ya existe en la variable global ---
+        evidenciaBase64: (botonActivo !== "OK") ? fotoEvidenciaBase64 : ""
         };
-
+    // Limpiamos el contenedor global de la foto para que la siguiente operación inicie limpia
+    fotoEvidenciaBase64 = "";
     // TRANSMISIÓN INMEDIATA A GOOGLE SHEETS
     // EMISIÓN DE AVISOS ACÚSTICOS INDUSTRIALES Y PANTALLA GIGANTE
     sonarBip750Hz("880","0.2");
@@ -738,25 +782,91 @@ function procesarLectura(evento) {
 // 5. MANEJO NATIVO DE HARDWARE (CÁMARA / DETECTOR)
 // Variable global para controlar la transmisión de video
 let streamActivoBodega = null;
+// Variable global para pausar/reanudar el flujo asíncrono secuencial
+let resolverEsperaEvidencia = null;
+
+function simularToggleCamaraEvidencia() {
+    return new Promise(async (resolve) => {
+        // Guardamos la referencia para poder desbloquear el await más adelante
+        resolverEsperaEvidencia = resolve;
+
+        // Levantamos visualmente la ventana verde de captura inyectando el cartel
+        document.getElementById('evidencia-cartel-superior').innerHTML = `<span>FOTO ${botonActivo}</span> <span>⚙️</span>`;
+        document.getElementById('modal-evidencia-gigante').style.display = "flex";
+        camaraActivaHardware = true;
+        try {
+            // Encendido del hardware físico (Lente Trasero) apuntando al modal de la foto
+            streamActivoBodega = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+                audio: false
+            });
+            const videoElemento = document.getElementById('video-evidencia-stream');
+            videoElemento.srcObject = streamActivoBodega;
+        } catch (err) {
+            alert("Acceso al hardware bloqueado. Revise permisos de cámara.");
+            apagarCamaraHardwareEvidencia();
+        }
+        estadoSecuenciaActual = "CAMARA_NEGRA";
+    });
+}
+
+function confirmarYCapturarFotoLocal() {
+    const video = document.getElementById('video-evidencia-stream');
+    if (!video) return;
+
+    // 1. Congelar fotograma de forma síncrona en memoria local
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Almacenamos el Base64 en tu variable global para que luego procesarLectura lo tome
+    fotoEvidenciaBase64 = canvas.toDataURL('image/jpeg', 0.6); 
+
+    console.log("📸 Evidencia resguardada en memoria. Pasando al escaneo QR...");
+
+    // 2. Apagamos el stream de la foto y cerramos su modal visual
+    if (streamActivoBodega) {
+        streamActivoBodega.getTracks().forEach(track => track.stop());
+    }
+    document.getElementById('modal-evidencia-gigante').style.display = "none";
+
+    // 3. ¡EL TRUCO CLAVE! Desbloqueamos el await de la línea 847
+    if (resolverEsperaEvidencia) {
+        resolverEsperaEvidencia(); 
+    }
+}
+
+function apagarCamaraHardwareEvidencia() {
+    if (streamActivoBodega) {
+        streamActivoBodega.getTracks().forEach(track => track.stop());
+    }
+    document.getElementById('modal-evidencia-gigante').style.display = "none";
+    camaraActivaHardware = false;
+    fotoEvidenciaBase64 = ""; // Vaciamos por seguridad si canceló
+    
+    // Liberamos el flujo para que no quede la aplicación congelada en segundo plano
+    if (resolverEsperaEvidencia) {
+        resolverEsperaEvidencia();
+    }
+    
+    // Si necesitas abortar toda la secuencia y regresar a la botonera principal:
+    restaurarBotonerainferior();
+    estadoSecuenciaActual = "BOTONERA";
+}
 
 async function simularToggleCamara() {
     // Al abrir guardamos en la memoria el botón que estaba activo
     botonPrevio = botonActivo;
-
-    // Si la cámara ya está activa, el botón actúa para apagarla (Cancelar)
-   // if (camaraActivaHardware) {
-   //     apagarCamaraHardware();
-   //     return;
-   // }
-    
+    if (botonActivo !== "OK") {
+        await simularToggleCamaraEvidencia();
+    }
     // Levantamos visualmente la ventana del escáner inyectando el visor dinámico si no existe
     document.getElementById('escaneo-cartel-superior').innerHTML = `<span>${botonActivo}</span> <span>${
         MAPA_ICONOS[botonActivo]}</span>`;
     document.getElementById('modal-escaneo-gigante').style.display = "flex";
-
-
     camaraActivaHardware = true;
-
     // Encendido del hardware físico (Lente Trasero "environment" a alta resolución)
     try {
         streamActivoBodega = await navigator.mediaDevices.getUserMedia({
@@ -765,7 +875,6 @@ async function simularToggleCamara() {
         });
         const videoElemento = document.getElementById('video-bodega-stream');
         videoElemento.srcObject = streamActivoBodega;
-
         // Iniciamos el bucle de análisis rápido acelerado cada 180 milisegundos
         analisisEnProgreso = false;
         window.bucleEscaneo = setInterval(analizarCuadroCamara, 230);
@@ -807,10 +916,8 @@ function apagarCamaraHardware() {
     if (streamActivoBodega) {
         streamActivoBodega.getTracks().forEach(track => track.stop());
     }
-
     document.getElementById('modal-escaneo-gigante').style.display = "none";
     camaraActivaHardware = false;
-
     // Si se cerró sin lectura, procesa la excepción vacía para retornar los botones al estado inicial
     if (document.getElementById('txt-lector').value.trim() === "") {
         procesarLectura({ key: 'Enter' });
@@ -822,10 +929,8 @@ function apagarCamaraHardware() {
 function activarModoDigitacion() {
     if (enModoDigitacion) return;
     enModoDigitacion = true;
-
     // 1. Ocultamos el botón de Escanear
     document.getElementById('btn-camara-toggle').style.display = "none";
-
     // 2. Expandimos el casillero al 70% y movemos el texto/cursor a la izquierda con letra más gorda
     const input = document.getElementById('txt-lector');
     input.style.setProperty('width', '70%', 'important');
@@ -834,11 +939,9 @@ function activarModoDigitacion() {
     input.style.setProperty('padding-left', '15px', 'important'); // <-- SEPARACIÓN ELEGANTE DEL BORDE
     input.style.setProperty('font-size', '18px', 'important'); // <-- LETRA MÁS GRANDE Y VISIBLE
     input.placeholder = " Digite manualmente el código...";
-
     // TRUCO INDUSTRIAL: Le asignamos el modo "text" para que el celular despliegue el teclado táctil al operario
     input.setAttribute('inputmode', 'text');
     input.focus();
-
     // 3. Transformamos el botón derecho en ENTER (30%)
     const btnDerecho = document.getElementById('btn-pausa-dinamico');
     if (btnDerecho) {
@@ -853,11 +956,9 @@ function activarModoDigitacion() {
 
 function restaurarBotoneraInferior() {
     enModoDigitacion = false;
-
     // 1. Restauramos el botón de Escanear (40%)
     const btnCamara = document.getElementById('btn-camara-toggle');
     if (btnCamara) btnCamara.style.display = "block";
-
     // 2. Regresamos el casillero a su tamaño compacto del 30% y centramos el texto de reposo
     const input = document.getElementById('txt-lector');
     input.style.setProperty('width', '30%', 'important');
@@ -939,7 +1040,9 @@ function alternarPausaLinea() {
             adicrpto: "-",
             sincronizado: false,
             esAnulado: false,
-            cantRev: 0
+            cantRev: 0,
+            urlImagen: "", 
+            evidenciaBase64: ""
 
         };
 
@@ -1210,7 +1313,7 @@ function sonarBip750Hz(frec, dur) {
 
           // EFECTO GURÚ: Hacemos que el celular vibre para avisar al operario con guantes
         if ('vibrate' in navigator) {
-            navigator.vibrate(frec/7); // Una vibración corta y firme de confirmación
+            navigator.vibrate((frec/3).toFixed(0)); // Una vibración corta y firme de confirmación
         }
 
     } catch (e) { console.error("Audio bloqueado por navegador:", e); }
