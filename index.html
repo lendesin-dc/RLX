@@ -297,7 +297,7 @@
 </div>
 
 <!-- Modal Gigante para el Modo Captura de Evidencia Manual (Foto Primero) -->
-<div id="modal-evidencia-gigante" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(100, 70, 70, 0.9); z-index: 99999; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 30px; box-sizing: border-box;">
+<div id="modal-evidencia-gigante" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(70, 114, 83, 0.8); z-index: 99999; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 30px; box-sizing: border-box;">
     
     <!-- ARRIBA: Cartel Dinámico de Selección Activa -->
     <div id="evidencia-cartel-superior" style="background: #0a3ce0c7; color: white; padding: 14px 40px; margin-bottom: 40px; border-radius: 6px; font-weight: bold; font-size: 1.4rem; text-transform: uppercase; box-shadow: 0 4px 15px rgba(255,255,255,0.1); display: flex; align-items: center; gap: 15px;">
@@ -311,14 +311,14 @@
     </div>
 
     <!-- ABAJO: Botonera de Control de Evidencia -->
-    <div style="width: 100%; max-width: 400px; margin-top: 40px; padding: 0 20px; box-sizing: border-box;">
+    <div style="width: 100%; max-width: 400px; margin-top: 40px; padding: 0 30px; box-sizing: border-box;">
         <!-- BOTÓN PRINCIPAL VERDE -->
-        <button onclick="confirmarYCapturarFotoLocal()" style="width: 100%; padding: 18px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 1.5rem; font-weight: bold; cursor: pointer; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(40,167,69,0.3);">
+        <button id="btn-tomar-foto" onclick="confirmarYCapturarFotoLocal()" style="width: 100%; padding: 24px; background: #28a745; color: white; border: none; border-radius: 8px; font-size: 1.5rem; font-weight: bold; cursor: pointer; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(40,167,69,0.3);">
             📸 Tomar Foto y Continuar
         </button>
         
         <!-- BOTÓN PARA ANULAR / CANCELAR -->
-        <button onclick="apagarCamaraHardwareEvidencia()" style="width: 100%; padding: 12px; background: #dc3545; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; opacity: 0.8;">
+        <button onclick="apagarCamaraHardwareEvidencia()" style="width: 100%; margin-top: 40px; padding: 12px; background: #dc3545; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; opacity: 0.8;">
             ✕ Cancelar Evidencia
         </button>
     </div>
@@ -460,11 +460,10 @@ let histRezagadosPRD = JSON.parse(localStorage.getItem('historial_rezagados_prd'
 let histPausasPRD = JSON.parse(localStorage.getItem('historial_pausas_prd')) || [];
 let ultimoHitoTime = Date.now(); // Estampa del milisegundo exacto del hito anterior
 
-
 // 2.1 Boton del medio
 async function exportar() {
     // 1. Traer la base de datos local completa desde el localStorage
-    const datosRaw = localStorage.getItem('historial_rezagados_prd');
+    const datosRaw = localStorage.getItem('historial_bodega_prd');
 
     if (!datosRaw || datosRaw === "[]") {
         alert("No hay registros en el historial local para exportar.");
@@ -517,8 +516,9 @@ async function exportar() {
     // Reemplazamos los ":" por "-" para que el nombre de archivo sea válido
     const JhoraFormateada = Jahora.toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
 
-    const JtimestampStr = `${Janio}-${Jmes}-${Jdia}-${JhoraFormateada}`;
-
+    const JtimestampStr = `${Janio}-${Jmes}-${Jdia}-----${JhoraFormateada}`;
+    const Jfecha = `${Janio}-${Jmes}-${Jdia}`;
+    const Jhora = Jahora.toLocaleTimeString('es-ES', { hour12: false });
     link.download = `Respaldo_${urlPuesto}_${JtimestampStr}.xls`;
 
     document.body.appendChild(link);
@@ -533,7 +533,8 @@ var matrizSubtotales = obtenerMatrizSubtotalesJSON();
     const payload = {
         accion: "CORREO",
         puesto: urlPuesto,
-        fecha: JtimestampStr,
+        fecha: Jfecha,
+        hora: Jhora, 
         datosRaw: histRezagadosPRD, 
         datosPausas : histPausasPRD,
         resumen: matrizSubtotales  // <--- ¡AQUÍ ENTRA LA MAGIA AUTOMÁTICA!        
@@ -570,7 +571,7 @@ function obtenerMatrizSubtotalesJSON() {
 
         if (!reg.esAnulado) {
             // CONDICIÓN DIVIDIDA: Evaluamos si es OK y miramos su historial de revisiones
-            if (reg.estadoFinal === "OK") {
+            if (reg.estadoDestino === "OK") {
                 if ((reg.cantRev || 1) === 1) {
                     agrupadoSKU[skuClave].validosDirectos++;     // Suma a la primera revisión
                 } else {
@@ -603,6 +604,7 @@ function obtenerMatrizSubtotalesJSON() {
     };
   });
 }
+
 // 3. CONTROL CENTRAL DE LA INTERFAZ Y PUESTOS (CEREBRO PRD)
 function fijarbotonEstado(codigo, boton) {
     document.querySelectorAll('.btn-prd').forEach(b => {
@@ -703,7 +705,7 @@ function procesarLectura(evento) {
     const regLeido = histLecturasPRD.find(item =>
         item.qr === cadenaQR  &&  !item.esAnulado
         );
-    const indexRezagado = histRezagadosPRD.findIndex(item =>  // se rescata el index para hacerle un splice por haber sido usado
+    const indexRezagado = histRezagadosPRD.findIndex(item =>  // se rescata el index para hacerle un splice, ya no ahora sera esAnulado True por haber sido usado
         item.qr === cadenaQR && !item.esAnulado
         );    
                 // hasta aqui registro leido puede estar tambien en rezagado porque no es un OK.
@@ -712,13 +714,13 @@ function procesarLectura(evento) {
     if (regLeido) {
         const deltaMinutos = (momentoLect - regLeido.id) / (1000 * 60);
                     //  si registro leido es OK no puede tener otro OK, si registro leido no es ok, no puede ser el mismo no ok 
-             if ( (deltaMinutos < 660 && regLeido.estadoFinal === "OK") || regLeido.estadoFinal === estadoDestinoLect ) {
+             if ( (deltaMinutos < 660 && regLeido.estadoDestino === "OK") || regLeido.estadoDestino === estadoDestinoLect ) {
                 alert(`¡PRODUCTO DUPLICADO!\n\nLa serie [${serieLect}] ya fue registrada hace ${deltaMinutos.toFixed(1)} minutos.`);
                 input.value = "";
                 procesarLectura({ key: 'Enter' });
                 return
                 } else {
-                    IDORIGEN = regLeido.destino; IDESTADOORIGEN = regLeido.estadoFinal;
+                    IDORIGEN = regLeido.destino; IDESTADOORIGEN = regLeido.estadoDestino;
                     IDCANTREV = regLeido.cantRev + 1;
                     console.log(`FALLA suma ${IDCANTREV} revisiones.` );
                  }
@@ -726,15 +728,18 @@ function procesarLectura(evento) {
 
     if ( indexRezagado !== -1 ) {
             const regRezagado = histRezagadosPRD[indexRezagado];
-            if ( regRezagado.estadoFinal === estadoDestinoLect ) {
+            if ( regRezagado.estadoDestino === estadoDestinoLect ) {
             alert(`¡PRODUCTO REPITE FALLA!\n\nLa falla [${estadoDestinoLect}] ya fue registrada.`);
             input.value = "";
             procesarLectura({ key: 'Enter' });
             return
             } else {
-                IDORIGEN = regRezagado.destino; IDESTADOORIGEN = regRezagado.estadoFinal;
+                IDORIGEN = regRezagado.destino; IDESTADOORIGEN = regRezagado.estadoDestino;
                 IDCANTREV = regRezagado.cantRev + 1;
-                histRezagadosPRD.splice(indexRezagado, 1);
+                // CAMBIO CRÍTICO: En vez de splice, lo marcamos como anulado (resuelto) para el panel
+                regRezagado.esSucedido = true; 
+                console.log(`📌 Rezagado ahora tiene sucesor (esSucedido = true) para el QR: ${cadenaQR}`);                
+                //    histRezagadosPRD.splice(indexRezagado, 1);
             }
     }
         
@@ -754,7 +759,7 @@ function procesarLectura(evento) {
         sku: skuLect, // col H
         serie: serieLect, // col I
         lote: loteLect, //  col J  Orden de Compra
-        estadoFinal: estadoDestinoLect,   // col K puede ser una letra tipo( E R B ) o un texto alusivo a la revisión ok o fuga, elec, comp, emb, DD
+        estadoDestino: estadoDestinoLect,   // col K puede ser una letra tipo( E R B ) o un texto alusivo a la revisión ok o fuga, elec, comp, emb, DD
         destino: destinoDef, //col L  una bodega como en la S, B-01 si revisión ok, Z-R si se encuentra defecto
         tiempoSegundos: TiempoTak,  // col M tiempos entre revision
         adicfalla: "-", // col N  columna reservada se usará para contar numero de reparaciones parametro del rezagado o lecturas previas)
@@ -764,7 +769,8 @@ function procesarLectura(evento) {
         cantRev: IDCANTREV,
         urlImagen: "", // Se procesará en la Web App de Google
         // --- NUEVO: Absorbe de forma limpia la foto que ya existe en la variable global ---
-        evidenciaBase64: (botonActivo !== "OK") ? fotoEvidenciaBase64 : ""
+        evidenciaBase64: (botonActivo !== "OK") ? fotoEvidenciaBase64 : "",
+        esSucedido: false
         };
     // Limpiamos el contenedor global de la foto para que la siguiente operación inicie limpia
     fotoEvidenciaBase64 = "";
@@ -807,7 +813,7 @@ function simularToggleCamaraEvidencia() {
         try {
             // Encendido del hardware físico (Lente Trasero) apuntando al modal de la foto
             streamActivoBodega = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+                video: { facingMode: "environment", width: { ideal: 960 }, height: { ideal: 720 } },
                 audio: false
             });
             const videoElemento = document.getElementById('video-evidencia-stream');
@@ -832,7 +838,7 @@ function confirmarYCapturarFotoLocal() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     // Almacenamos el Base64 en tu variable global para que luego procesarLectura lo tome
-    fotoEvidenciaBase64 = canvas.toDataURL('image/jpeg', 0.6); 
+    fotoEvidenciaBase64 = canvas.toDataURL('image/jpeg', 0.7); 
 
     console.log("📸 Evidencia resguardada en memoria. Pasando al escaneo QR...");
 
@@ -866,6 +872,31 @@ function apagarCamaraHardwareEvidencia() {
     estadoSecuenciaActual = "BOTONERA";
 }
 
+window.addEventListener('keydown', function(event) {
+    const modalVisible = document.getElementById('modal-evidencia-gigante') || document.getElementById('modal-evidence-gigante'); 
+    
+    if (modalVisible && (modalVisible.style.display === 'flex' || modalVisible.style.display === 'block')) {
+        
+        if (event.key === 'Enter' || event.keyCode === 13 || 
+            event.key === 'VolumeUp' || event.keyCode === 24 || 
+            event.key === 'VolumeDown' || event.keyCode === 25 ) {
+            // 1. Evita comportamientos por defecto del navegador con la tecla Enter
+            event.preventDefault(); 
+            
+            console.log("Teclado físico detectado: Forzando click virtual...");
+            
+            const botonVerde = document.getElementById('btn-tomar-foto');
+            if (botonVerde) {
+                // 2. Ejecuta el click simulando interactividad real para desbloquear el foco del navegador
+                botonVerde.click(); 
+            } else {
+                // Respaldo por si no encuentra el botón por ID
+                confirmarYCapturarFotoLocal();
+            }
+        }
+    }
+});
+    
 async function simularToggleCamara() {
     // Al abrir guardamos en la memoria el botón que estaba activo
     botonPrevio = botonActivo;
@@ -1043,7 +1074,7 @@ function alternarPausaLinea() {
             sku: "PAUSA", // Queda agrupado de forma idéntica
             serie: "DETENCION",
             lote: "",
-            estadoFinal: "PAUSA",
+            estadoDestino: "PAUSA",
             destino: "",
             tiempoSegundos: segundosPausaMuerta,
             adicfalla: "-",
@@ -1052,7 +1083,8 @@ function alternarPausaLinea() {
             esAnulado: false,
             cantRev: 0,
             urlImagen: "", 
-            evidenciaBase64: ""
+            evidenciaBase64: "",
+            esSucedido: false
 
         };
 
@@ -1088,20 +1120,44 @@ function conmutarModoVista() {
 function solicitarAnulacion(idRegistro) {
     // 1. Buscamos el objeto en el historial usando su ID único
     const registro = histLecturasPRD.find(item => item.id === idRegistro);
-    
+    if ( !registro )  {return};  
+        // =========================================================================
+        // RESTRUCTURACIÓN CRÍTICA: GESTIÓN DE ANULACIÓN CON ENFOQUE EN REVISIONES
+        // =========================================================================
+
+        if (registro.cantRev > 1) {
+            // Buscamos al padre exacto en la historia de la pieza: mismo QR, que esté oculto y con una revisión menos
+            const registroPadre = histRezagadosPRD.find(itemRez => 
+                itemRez.qr === registro.qr && 
+                itemRez.estadoDestino === registro.estadoOrigen && 
+                itemRez.cantRev === (registro.cantRev - 1)
+            );
+
+            if (registroPadre) {
+                // LE DEVOLVEMOS El boton anulado en la interfaz del Motorola
+                registroPadre.esSucedido = false; 
+           //   registroPadre.sincronizado = false; // No se vuelve a actualizar en la nube ya está, el registro anulado SI
+                console.log(`♻️ Árbol genealógico restaurado: Padre revivido en Rezagados para el QR: ${registro.qr}`);
+            } else {
+                // Alerta de seguridad por si la cadena física de datos se rompió por manipulación externa
+                alert("¡ALERTA DE CONSISTENCIA!\n\nNo se encontró el registro padre en la memoria local. Contacte al supervisor de sistemas.");
+                console.warn(`❌ No se encontró un padre activo para el QR: ${registro.qr} con Cant.Rev: ${registro.cantRev - 1}`);
+                return
+            }
+
+        }        
+
     if (registro && !registro.esAnulado) {
         // 2. Modificaciones al PUNTERO del objeto
         registro.esAnulado = true;
-        
         // 🚨 CRUCIAL PARA MODO OFFLINE: 
         // Forzamos sincronizado en false para que el filtro de la cola lo detecte.
-        // Agregamos 'tipoAccion' para que Google Sheets sepa qué hacer al recibirlo.
         registro.sincronizado = false; 
-        registro.tipoAccion = "ANULAR"; 
-        if ( registro.estadoFinal !== "OK" ) {
-            const indexRez = histRezagadosPRD.findIndex(itemRez =>  // se rescata el index para hacerle un splice por haber sido usado
+
+        if ( registro.estadoDestino !== "OK" ) {
+            const indexRez = histRezagadosPRD.findIndex(itemRez =>  // se rescata el index para hacerle un splice no se necesita anulado
             itemRez.id === idRegistro );
-            console.log( `Puntero indexRez  ${indexRez} splice en Rezago.` );        
+            console.log( `Puntero indexRez  ${indexRez} splice en Rezago ( se está anulando un rezagado ).` );        
             if ( indexRez !== -1 ) { histRezagadosPRD.splice(indexRez, 1)};
         }
         // 3. Persistencia local inmediata e impacto en la interfaz
@@ -1113,7 +1169,7 @@ function solicitarAnulacion(idRegistro) {
         // 4. Centralizamos el envío a través del motor asíncrono en vez de disparar el fetch directo
         reprocesarColaPendiente();
     }
-    
+        // =========================================================================
     // Mantiene tu comportamiento original de usabilidad con el teclado
     document.getElementById('btn-ok-base').focus();
 }
@@ -1141,8 +1197,8 @@ function actualizarTablaVista() {
             const fila = document.createElement('tr');
 
             // Colores suaves de fondo según el tipo de registro
-            if (reg.estadoFinal === "PAUSA") fila.className = "row-pausa-sistema";
-            else if (reg.estadoFinal !== "OK") fila.className = "row-reparar";
+            if (reg.estadoDestino === "PAUSA") fila.className = "row-pausa-sistema";
+            else if (reg.estadoDestino !== "OK") fila.className = "row-reparar";
 
             if (reg.esAnulado) fila.classList.add('registro-anulado');
 
@@ -1155,12 +1211,24 @@ function actualizarTablaVista() {
             let celdaEstadoNube = "";
             if (!reg.sincronizado) {
                 // Si está en cola: Texto del estado + Reloj parpadeando
-                celdaEstadoNube = `<span class="sincro-espera" style="font-size: 1.1rem; font-weight: bold; color: #ca8a04;">${reg.estadoFinal} ⏳</span>`;
+                celdaEstadoNube = `<span class="sincro-espera" style="font-size: 1.1rem; font-weight: bold; color: #ca8a04;">${reg.estadoDestino} ⏳</span>`;
             } else {
                 // Si ya está en la nube: Texto del estado + Su emoji correspondiente fijado
-                const emojiDefinitivo = MAPA_ICONOS[reg.estadoFinal] || "✔️";
-                celdaEstadoNube = `<span style="font-size: 1.1rem; font-weight: bold; color: #1e293b;">${reg.estadoFinal} ${emojiDefinitivo}</span>`;
+                const emojiDefinitivo = MAPA_ICONOS[reg.estadoDestino] || "✔️";
+                celdaEstadoNube = `<span style="font-size: 1.1rem; font-weight: bold; color: #1e293b;">${reg.estadoDestino} ${emojiDefinitivo}</span>`;
             }
+
+                let celdaAccionHtml = "";
+
+                if (reg.esAnulado) {
+                    celdaAccionHtml = `<span style="color: #ca8a04; font-weight: bold;">ANULADO</span>`;
+                } else if (reg.esSucedido) {
+                    // REGLA 2: Si tiene sucesor, el botón desaparece y muestra un badge gris elegante
+                    celdaAccionHtml = `<span style="color: #64748b; font-style: italic;">Rev.${reg.cantRev}</span>`;
+                } else {
+                    // Si está vivo y no tiene sucesor, es el último eslabón y tiene el botón activo
+                    celdaAccionHtml = `<button class="btn-anular" style="${botonEstilo}" onclick="solicitarAnulacion(${reg.id})">${botonTexto}</button>`;
+                }
 
             // Inyección de celdas con tipografía grande para operario y chica para el QR
             fila.innerHTML = `
@@ -1168,11 +1236,7 @@ function actualizarTablaVista() {
                 <td style="font-size: 1.1rem; font-weight: 900; color: #2e3a8a: letter-spacing: 0.3px;">${reg.sku}</td>
                 <td style="font-size: 1.1rem; font-weight: 900; color: #1e3a8a; letter-spacing: 0.3px;">${reg.serie}</td>
                 <td style="text-align: center; border-left: 1px solid #e2e8f0; background: #f8fafc;">${celdaEstadoNube}</td>
-                <td style="font-size: 1.1rem; font-weight: bold; color: #2563eb;">${(!reg.esAnulado) ?
-                `<button class="btn-anular" style="${botonEstilo}" onclick="solicitarAnulacion(${reg.id})">${botonTexto}</button>` :
-                `<span class="badge-anulado">${reg.estadoDestino === 'ANULADO' ? 'Anulado' : 'ANULADO'}</span>`}
-            </td>
-            `;
+                <td style="font-size: 1.1rem; font-weight: bold; color: #2563eb;">${celdaAccionHtml}</td>`;
             tbody.appendChild(fila);
         });
 
@@ -1200,7 +1264,7 @@ function actualizarTablaVista() {
                 };
             }
             if (!reg.esAnulado) {
-                if (reg.estadoFinal === "OK") agrupadoSKU[skuClave].validos++;
+                if (reg.estadoDestino === "OK") agrupadoSKU[skuClave].validos++;
                 else agrupadoSKU[skuClave].incidencias++;
 
                 // Filtro de descarte para tiempos mayores a 20 minutos (1200 segundos)
@@ -1253,6 +1317,7 @@ async function enviarAGoogleSheets(objetoRegistro) {
 
         // 3. Como es 'no-cors', asumimos éxito si no entró al catch
         objetoRegistro.sincronizado = true;
+        objetoRegistro.evidenciaBase64 = "";
         guardarEnMemoriaLocal();
         actualizarTablaVista(); // Cambia el reloj ⏳ por el emoji definitivo 🟢
         console.log("Sincronización exitosa para ID:", objetoRegistro.id);
