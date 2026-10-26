@@ -244,7 +244,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.9); /* Fondo ligero trasluz */
+    background: rgba(10,10,10,0.9); /* Fondo ligero trasluz */
     z-index: 99999; /* Por encima de absolutamente todo */
     flex-direction: column;
     align-items: center;
@@ -297,7 +297,7 @@
 </div>
 
 <!-- Modal Gigante para el Modo Captura de Evidencia Manual (Foto Primero) -->
-<div id="modal-evidencia-gigante" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(70, 114, 83, 0.8); z-index: 99999; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 30px; box-sizing: border-box;">
+<div id="modal-evidencia-gigante" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 48, 30, 0.9); z-index: 99999; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 30px; box-sizing: border-box;">
     
     <!-- ARRIBA: Cartel Dinámico de Selección Activa -->
     <div id="evidencia-cartel-superior" style="background: #0a3ce0c7; color: white; padding: 14px 40px; margin-bottom: 40px; border-radius: 6px; font-weight: bold; font-size: 1.4rem; text-transform: uppercase; box-shadow: 0 4px 15px rgba(255,255,255,0.1); display: flex; align-items: center; gap: 15px;">
@@ -307,7 +307,7 @@
     <!-- AL MEDIO: Contenedor del stream de video de evidencia -->
     <div style="width:320px; height:320px; border:4px dashed #28a745; border-radius:12px; overflow:hidden; background:#000; position:relative;">
         <video id="video-evidencia-stream" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
-        <!--div style="position:absolute; top:50%; left:10%; width:80%; height:2px; background:rgba(40,167,69,0.8); box-shadow:0 0 4px #28a745; pointer-events:none;"></div-->
+        
     </div>
 
     <!-- ABAJO: Botonera de Control de Evidencia -->
@@ -456,7 +456,7 @@ let ultimoMovimientoTiempo = 0;
 
 // Inicializadores de base de datos local en RAM/Session
 let histLecturasPRD = JSON.parse(localStorage.getItem('historial_bodega_prd')) || [];
-let histRezagadosPRD = JSON.parse(localStorage.getItem('historial_rezagados_prd')) || [];
+//let histRezagadosPRD = JSON.parse(localStorage.getItem('historial_rezagados_prd')) || [];
 let histPausasPRD = JSON.parse(localStorage.getItem('historial_pausas_prd')) || [];
 let ultimoHitoTime = Date.now(); // Estampa del milisegundo exacto del hito anterior
 
@@ -1522,19 +1522,39 @@ function limpiarPantallaCompleta() {
 // Inicialización de la planta al cargar
 window.onload = function() {
   
-  // 🔒 EL CANDADO EXCLUSIVO PARA REZAGADOS:
-  var localRezagados = localStorage.getItem('historial_rezagados_prd');
-  
-  if (localRezagados !== null && localRezagados !== undefined) {
-    // Si el navegador se cerró o se refrescó, recuperamos el avance del operario desde el disco
-    histRezagadosPRD = JSON.parse(localRezagados);
-    console.log("Rezagados recuperados de memoria local. No se consulta al servidor.");
-  } else {
-    // Si la memoria está totalmente limpia (porque se apretó limpiar pantalla completa),
-    // recién ahí viaja a Google Sheets a buscar la lista inicial
+ // 1. Recuperamos el texto plano del localStorage
+var localRezagados = localStorage.getItem('historial_rezagados_prd');
+
+if (localRezagados !== null && localRezagados !== undefined) {
+    var rezagadosClonados = JSON.parse(localRezagados);
+    
+    // 2. HIDRATACIÓN: Cruzamos los cables para que apunten a la verdad en histLecturasPRD
+    histRezagadosPRD = rezagadosClonados.map(function(rez) {
+        
+        // Buscamos la lectura original que coincida en el trío de llaves maestras
+        var lecturaVerdadera = histLecturasPRD.find(function(lec) {
+            return lec.qr === rez.qr && 
+                   lec.esSucedido === rez.esSucedido && 
+                   lec.cantRev === rez.cantRev;
+        });
+        
+        // Si encontramos el registro de verdad en la RAM de lecturas:
+        if (lecturaVerdadera) {
+            // Hacemos que el rezagado comparta la misma referencia de memoria que la lectura.
+            // A partir de aquí, cualquier cambio en 'lecturaVerdadera' modificará a este 'rez' de forma automática.
+            return lecturaVerdadera; 
+        }
+        
+        // Si por alguna razón de limpieza de turnos no está en lecturas, conserva su clon por seguridad
+        return rez;
+    });
+
+    console.log("Rezagados recuperados. Punteros enlazados con éxito a la verdad de histLecturasPRD.");
+} else {
+    // Si la memoria está totalmente limpia, viaja a Google Sheets a buscar la lista inicial
     console.log("Memoria limpia. Descargando rezagados iniciales desde el servidor...");
     sincronizarRezagadosAlInicio();
-  }
+}
 
   // Continuamos con el comportamiento normal de tu aplicación
   actualizarTablaVista();
