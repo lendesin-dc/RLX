@@ -385,7 +385,7 @@ function sincronizarRezagadosAlInicio() {
       localStorage.setItem('historial_rezagados_prd', JSON.stringify(histRezagadosPRD));
       
       console.log("HistorialRezagadosPRD sincronizado con éxito. Total registros: " + histRezagadosPRD.length);
-      
+      sonarBip750Hz("980","0.5");
       // Opcional: Si tienes una función para redibujar la interfaz de la pistola, llámala aquí
       // actualizarPantallaPistola();
     })
@@ -813,7 +813,7 @@ function simularToggleCamaraEvidencia() {
         try {
             // Encendido del hardware físico (Lente Trasero) apuntando al modal de la foto
             streamActivoBodega = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "environment", width: { ideal: 960 }, height: { ideal: 720 } },
+                video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 960 } },
                 audio: false
             });
             const videoElemento = document.getElementById('video-evidencia-stream');
@@ -838,7 +838,7 @@ function confirmarYCapturarFotoLocal() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     
     // Almacenamos el Base64 en tu variable global para que luego procesarLectura lo tome
-    fotoEvidenciaBase64 = canvas.toDataURL('image/jpeg', 0.7); 
+    fotoEvidenciaBase64 = canvas.toDataURL('image/jpeg', 0.75); 
 
     console.log("📸 Evidencia resguardada en memoria. Pasando al escaneo QR...");
 
