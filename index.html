@@ -366,8 +366,8 @@ const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbwgXz11ga0JPKWNq
 
 const URL_GANTT = "https://script.google.com/macros/s/AKfycbxoDJlOxRApjJQHiODdqQR-7hNx6zBAe2p6hG23pgTMB_eKI29Azy7caV9Vk6Cc7fU/exec?puesto=";
 
-const URL_REZAGADOS = "https://script.google.com/macros/s/AKfycbzB0Gnrct5gcKaA_QaBGk8Ztfk5cinGVvxR2qRe5SAiH6oIhjL0yI5_ey3rmKQhqJRO/exec?accion=rezagados"
-
+    //  RLX_Arranque  
+const URL_REZAGADOS = "https://script.google.com/macros/s/AKfycbyliKLdJlN7Z75La1z16gPn_u8EvepL6HDym7t3ETziyVa5Glt6UNkkWKbXtRlfZHjE2g/exec?accion=rezagados"
 
 function sincronizarRezagadosAlInicio() {
   // Construimos la URL apuntando a la acción del script
@@ -705,7 +705,7 @@ function procesarLectura(evento) {
     const regLeido = histLecturasPRD.find(item =>
         item.qr === cadenaQR  &&  !item.esAnulado
         );
-    const indexRezagado = histRezagadosPRD.findIndex(item =>  // se rescata el index para hacerle un splice, ya no ahora sera esAnulado True por haber sido usado
+    const indexRezagado = histRezagadosPRD.findIndex(item =>  // si hay una nueva lectura valida el rezagado que se encuentre serà marcado con esSucedido = true
         item.qr === cadenaQR && !item.esAnulado
         );    
                 // hasta aqui registro leido puede estar tambien en rezagado porque no es un OK.
@@ -736,7 +736,7 @@ function procesarLectura(evento) {
             } else {
                 IDORIGEN = regRezagado.destino; IDESTADOORIGEN = regRezagado.estadoDestino;
                 IDCANTREV = regRezagado.cantRev + 1;
-                // CAMBIO CRÍTICO: En vez de splice, lo marcamos como anulado (resuelto) para el panel
+                // CAMBIO CRÍTICO: En vez de splice, lo marcamos como esSucedido = true (rev.x ) para el panel boton queda no activo
                 regRezagado.esSucedido = true; 
                 console.log(`📌 Rezagado ahora tiene sucesor (esSucedido = true) para el QR: ${cadenaQR}`);                
                 //    histRezagadosPRD.splice(indexRezagado, 1);
