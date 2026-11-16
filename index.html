@@ -780,15 +780,17 @@ function procesarLectura(evento) {
         estadoDestino: estadoDestinoLect,   // col K puede ser una letra tipo( E R B ) o un texto alusivo a la revisión ok o fuga, elec, comp, emb, DD
         destino: destinoDef, //col L  una bodega como en la S, B-01 si revisión ok, Z-R si se encuentra defecto
         tiempoSegundos: TiempoTak,  // col M tiempos entre revision
-        adicfalla: "-", // col N  columna reservada se usará para contar numero de reparaciones parametro del rezagado o lecturas previas)
-        adicrpto: "-", // col O  columna reservada para cuando se ocupe en zona de reparacion Z-R  ( parametro de URL ?)
+        adicfalla: "", // col N  columna reservada se usará para contar numero de reparaciones parametro del rezagado o lecturas previas)
+        adicrpto: "", // col O  columna reservada para cuando se ocupe en zona de reparacion Z-R  ( parametro de URL ?)
         sincronizado: false,  //col P
         esAnulado: false,  // col Q
         cantRev: IDCANTREV,
         urlImagen: "", // Se procesará en la Web App de Google
         // --- NUEVO: Absorbe de forma limpia la foto que ya existe en la variable global ---
         evidenciaBase64: (botonActivo !== "OK") ? fotoEvidenciaBase64 : "",
-        esSucedido: false
+        esSucedido: false,
+        tRepStd: "",
+        sincOlap: "nuevo"
         };
     // Limpiamos el contenedor global de la foto para que la siguiente operación inicie limpia
     fotoEvidenciaBase64 = "";
@@ -857,7 +859,7 @@ function confirmarYCapturarFotoLocal() {
     
     // Almacenamos el Base64 en tu variable global para que luego procesarLectura lo tome
     fotoEvidenciaBase64 = canvas.toDataURL('image/jpeg', 0.75); 
-sonarBip750Hz("980","2");
+sonarBip750Hz("980","1");
     console.log("📸 Evidencia resguardada en memoria. Pasando al escaneo QR...");
 
     // 2. Apagamos el stream de la foto y cerramos su modal visual
@@ -1095,14 +1097,16 @@ function alternarPausaLinea() {
             estadoDestino: "PAUSA",
             destino: "",
             tiempoSegundos: segundosPausaMuerta,
-            adicfalla: "-",
-            adicrpto: "-",
+            adicfalla: "",
+            adicrpto: "",
             sincronizado: false,
             esAnulado: false,
             cantRev: 0,
             urlImagen: "", 
             evidenciaBase64: "",
-            esSucedido: false
+            esSucedido: false,
+            tRepStd: "",
+            sincOlap: "nuevo"
 
         };
 
