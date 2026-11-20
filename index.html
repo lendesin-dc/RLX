@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Registro de Revisión</title>
     <style>
-        /* Ajustes de diseño adaptables (Mobile-First) e Industriales */
+        /* Ajustes de diseño adaptables (Mobile-First) e  Industriales */
         :root {
             --primary: #2563eb;
             --success: #16a34a;
@@ -362,17 +362,21 @@ let urlEstadoOrigen = urlParams.get('estado') || "NOR";
 let fotoEvidenciaBase64 = "";
 
 // 1. CONFIGURACIÓN DEL ENTORNO REMOTO DE GOOGLE SHEETS
-const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbwgXz11ga0JPKWNq98gkaXn0t-N_yO4ZcMgD15Y3V3pIfnau42443kooNknmoFRFZBf/exec";
-
+const URL_GOOGLE_APP = "https://script.google.com/macros/s/AKfycbwgXz11ga0JPKWNq98gkaXn0t-N_yO4ZcMgD15Y3V3pIfnau42443kooNknmoFRFZBf/exec"; 
+               // RLX2 "https://script.google.com/macros/s/AKfycbxr99JSJhnXWkz_-6r-9GyObu79BnLxKHqw-1FjZpH6AaEWR-uFOf8tDSwSarCJ8WNz/exec"; 
+               // RLX  "https://script.google.com/macros/s/AKfycbwgXz11ga0JPKWNq98gkaXn0t-N_yO4ZcMgD15Y3V3pIfnau42443kooNknmoFRFZBf/exec";
+    
 const URL_GOOGLE_CORREO = "https://script.google.com/macros/s/AKfycbwFXgvLhGo4joBmyhnkXz82nM0QIiurl_DTX6jUOZ5d4fQS64bbNH0WoHUl1Vqp77g/exec";   
             // CORREOS2   "https://script.google.com/macros/s/AKfycbz3MxCCvJDInDWPQSyK0Rn1GZj8SbcHmY-p0MXyFyIRRnGugmiY8fdOj3wnaeNDkCNsqQ/exec";
               // CORREOS  "https://script.google.com/macros/s/AKfycbwFXgvLhGo4joBmyhnkXz82nM0QIiurl_DTX6jUOZ5d4fQS64bbNH0WoHUl1Vqp77g/exec"; 
-
     
-const URL_GANTT = "https://script.google.com/macros/s/AKfycbxoDJlOxRApjJQHiODdqQR-7hNx6zBAe2p6hG23pgTMB_eKI29Azy7caV9Vk6Cc7fU/exec?puesto=";
+const URL_GANTT = "https://script.google.com/macros/s/AKfycbxoDJlOxRApjJQHiODdqQR-7hNx6zBAe2p6hG23pgTMB_eKI29Azy7caV9Vk6Cc7fU/exec?puesto=";  
+        // GANTT2 "https://script.google.com/macros/s/AKfycbxkkOzNcsfoj6bNWR0oREAIURDaexM11mCGx0NTGGpcfCzqD1ga6wKtDSlcplTQ9h2Sqw/exec?puesto=";
+         // GANTT "https://script.google.com/macros/s/AKfycbxoDJlOxRApjJQHiODdqQR-7hNx6zBAe2p6hG23pgTMB_eKI29Azy7caV9Vk6Cc7fU/exec?puesto=";
 
-    //  RLX_Arranque  
-const URL_REZAGADOS = "https://script.google.com/macros/s/AKfycbyliKLdJlN7Z75La1z16gPn_u8EvepL6HDym7t3ETziyVa5Glt6UNkkWKbXtRlfZHjE2g/exec?accion=rezagados"
+const URL_REZAGADOS = "https://script.google.com/macros/s/AKfycbyliKLdJlN7Z75La1z16gPn_u8EvepL6HDym7t3ETziyVa5Glt6UNkkWKbXtRlfZHjE2g/exec?accion=rezagados";
+    // RLX2 ARRANQUE  "https://script.google.com/macros/s/AKfycbxtPWs1llOs0UWyOQ7V6vITw6WtsJW4IW1J1hguaryHyO6wH3FXFkEZ39NI_sUMMnCJ/exec?accion=rezagados";
+    //  RLX_Arranque  "https://script.google.com/macros/s/AKfycbyliKLdJlN7Z75La1z16gPn_u8EvepL6HDym7t3ETziyVa5Glt6UNkkWKbXtRlfZHjE2g/exec?accion=rezagados";
 
 function sincronizarRezagadosAlInicio() {
   // Construimos la URL apuntando a la acción del script
@@ -544,6 +548,8 @@ var matrizSubtotales = obtenerMatrizSubtotalesJSON();
         datosPausas : histPausasPRD,
         resumen: matrizSubtotales  // <--- ¡AQUÍ ENTRA LA MAGIA AUTOMÁTICA!        
         };
+
+    if ( urlPuesto === "LINEA-X" ) {
     try {
         fetch(URL_GOOGLE_APP, {
             method: "POST",
@@ -557,6 +563,7 @@ var matrizSubtotales = obtenerMatrizSubtotalesJSON();
     } catch (error) {
         alert("Archivo guardado localmente.");
         }
+    } 
 
     try {
         fetch(URL_GOOGLE_CORREO, {
@@ -565,11 +572,13 @@ var matrizSubtotales = obtenerMatrizSubtotalesJSON();
             headers: { "Content-Type": "text/plain" },
             body: JSON.stringify(payload)
         });
+
         alert("¡Archivo guardado localmente y enviados");
+
      } catch (error) {
         alert("Archivo guardado localmente.");
          }
-
+     
 }
 
 function obtenerMatrizSubtotalesJSON() {
@@ -617,7 +626,7 @@ function obtenerMatrizSubtotalesJSON() {
       "validosDirectos": item.validosDirectos,
       "validosRecuperados": item.validosRecuperados,
       "fallados": item.incidencias,
-      "tiempo": minutosDecimales + " min",
+      "tiempo": minutosDecimales,
       "total": totalItems
     };
   });
@@ -653,22 +662,28 @@ function fijarbotonEstadonuevo(codigo, boton) {
  console.log("Estado seleccionado listo para captura:", botonActivo);
 }
 
-// 4. PROCESADOR DE ENTRADA CENTRAL DE DATOS (BACKOFFICE DE LECTURA)
+// --- ENTRADA 1: PISTOLA / TECLADO (Mantiene el nombre original de tu HTML) ---
 function procesarLectura(evento) {
     if (evento.key !== 'Enter') return;
-    const input = document.getElementById('txt-lector');
-    const cadenaQR = input.value.trim();
-    // EXCEPCIÓN DETECTADA: Si el resultado es NO OK (cámara cerrada o enter vacío)
-    if (cadenaQR === "") {
-        console.log("Excepción: Captura vacía. Retornando a botón anterior:", botonPrevio);
-        restaurarBotoneraInferior();
+    procesarCodigoBodega(document.getElementById('txt-lector').value);
+}
 
-        // Retornamos la interfaz exactamente al botón que tenía antes de abrir la cámara
+// --- NÚCLEO UNIFICADO (Recibe pistola o cámara por igual) ---
+function procesarCodigoBodega(valorCrudo) {
+    const input = document.getElementById('txt-lector');
+    const cadenaQR = valorCrudo.trim();
+    input.value = cadenaQR;
+
+    // 4. PROCESADOR DE ENTRADA CENTRAL DE DATOS (BACKOFFICE DE LECTURA)
+    // Cierre manual de cámara o Enter vacío -> Restaura botonera
+    if (cadenaQR === '') {
+        restaurarBotoneraInferior();
         const botonAActivar = Array.from(document.querySelectorAll('.btn-opcion'))
-                                   .find(b => b.innerText.includes(botonPrevio));
-        if (botonAActivar) fijarbotonEstado(botonPrevio, botonAActivar);
+            .find(b => b.innerText.includes(botonPrevio));
+        if (botonAActivar) fijarBotonEstado(botonPrevio, botonAActivar);
         return;
     }
+
     // VERIFICACIÓN Y TRADUCCIÓN DE FORMATO DE BODEGA
     if (!cadenaQR.includes('#')) {
         alert("¡CÓDIGO NO VÁLIDO!\n\nAl formato le falta el separador (#). Pruebe de nuevo.");
@@ -796,7 +811,7 @@ function procesarLectura(evento) {
     fotoEvidenciaBase64 = "";
     // TRANSMISIÓN INMEDIATA A GOOGLE SHEETS
     // EMISIÓN DE AVISOS ACÚSTICOS INDUSTRIALES Y PANTALLA GIGANTE
-    sonarBip750Hz("880","0.2");
+    sonarBip750Hz("880","0.25");
     histLecturasPRD.unshift(nuevoRegistro);
     enviarAGoogleSheets(nuevoRegistro);
     if ( botonActivo !== "OK" ) { histRezagadosPRD.unshift(nuevoRegistro) } ; 
@@ -821,7 +836,7 @@ let streamActivoBodega = null;
 // Variable global para pausar/reanudar el flujo asíncrono secuencial
 let resolverEsperaEvidencia = null;
 
-function simularToggleCamaraEvidencia() {
+async function simularToggleCamaraEvidencia() {
     return new Promise(async (resolve) => {
         // Guardamos la referencia para poder desbloquear el await más adelante
         resolverEsperaEvidencia = resolve;
@@ -846,7 +861,7 @@ function simularToggleCamaraEvidencia() {
     });
 }
 
-function confirmarYCapturarFotoLocal() {
+async function confirmarYCapturarFotoLocal() {
     const video = document.getElementById('video-evidencia-stream');
     if (!video) return;
 
@@ -859,9 +874,9 @@ function confirmarYCapturarFotoLocal() {
     
     // Almacenamos el Base64 en tu variable global para que luego procesarLectura lo tome
     fotoEvidenciaBase64 = canvas.toDataURL('image/jpeg', 0.75); 
-sonarBip750Hz("980","1");
-    console.log("📸 Evidencia resguardada en memoria. Pasando al escaneo QR...");
 
+    console.log("📸 Evidencia resguardada en memoria. Pasando al escaneo QR...");
+    await sonarBip750Hz("980","1");
     // 2. Apagamos el stream de la foto y cerramos su modal visual
     if (streamActivoBodega) {
         streamActivoBodega.getTracks().forEach(track => track.stop());
@@ -881,7 +896,7 @@ function apagarCamaraHardwareEvidencia() {
     document.getElementById('modal-evidencia-gigante').style.display = "none";
     camaraActivaHardware = false;
     fotoEvidenciaBase64 = ""; // Vaciamos por seguridad si canceló
-    
+    sonarBip750Hz("1280","0.5");
     // Liberamos el flujo para que no quede la aplicación congelada en segundo plano
     if (resolverEsperaEvidencia) {
         resolverEsperaEvidencia();
@@ -917,73 +932,80 @@ window.addEventListener('keydown', function(event) {
     }
 });
     
-async function simularToggleCamara() {
-    // Al abrir guardamos en la memoria el botón que estaba activo
-    botonPrevio = botonActivo;
-    if (botonActivo !== "OK") {
-        await simularToggleCamaraEvidencia();
-    }
-    // Levantamos visualmente la ventana del escáner inyectando el visor dinámico si no existe
-    document.getElementById('escaneo-cartel-superior').innerHTML = `<span>${botonActivo}</span> <span>${
-        MAPA_ICONOS[botonActivo]}</span>`;
-    document.getElementById('modal-escaneo-gigante').style.display = "flex";
-    camaraActivaHardware = true;
-    // Encendido del hardware físico (Lente Trasero "environment" a alta resolución)
-    try {
-        streamActivoBodega = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-            audio: false
-        });
-        const videoElemento = document.getElementById('video-bodega-stream');
-        videoElemento.srcObject = streamActivoBodega;
-        // Iniciamos el bucle de análisis rápido acelerado cada 180 milisegundos
-        analisisEnProgreso = false;
-        window.bucleEscaneo = setInterval(analizarCuadroCamara, 230);
-    } catch (err) {
-        alert("Acceso al hardware bloqueado. Asegúrese de dar permisos de cámara en la barra de direcciones HTTPS.");
-        apagarCamaraHardware();
-    }
-    estadoSecuenciaActual = "CAMARA_NEGRA";
-}
-
-// Bucle analizador compatible cross-platform
-async function analizarCuadroCamara() {
+// --- CONTROL DE FLUJO DE CÁMARA ---
+const EscanerBodega = (() => {
+    const detector = new BarcodeDetector({ formats: ['qr_code'] });
+    const modal = document.getElementById('modal-escaneo-gigante');
+    const cartel = document.getElementById('escaneo-cartel-superior');
     const video = document.getElementById('video-bodega-stream');
-    if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) return;
-    if (analisisEnProgreso) return;
-    // Si el dispositivo tiene soporte nativo (Android Chrome), procesa de forma acelerada por GPU
-    if ('BarcodeDetector' in window) {
-        try {
-            analisisEnProgreso = true;
-            const detector = new BarcodeDetector({ formats: ['qr_code'] });
+
+    let stream = null;
+    let timerId = null;
+    let activo = false;
+
+    async function cicloDeteccion() {
+        if (!activo) return;
+
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
             const codigos = await detector.detect(video);
             if (codigos.length > 0) {
-                clearInterval(bucleEscaneo);
-                document.getElementById('txt-lector').value = codigos[0].rawValue;
-                apagarCamaraHardware();
-                procesarLectura({ key: 'Enter' }); // Disparador automático
-            } else {
-                analisisEnProgreso = false;
+                const valorQR = codigos[0].rawValue;
+                detener(false);
+                procesarCodigoBodega(valorQR);
+                return;
             }
-        } catch (e) { analisisEnProgreso = false; /* Silencio cuadro a cuadro */ }
-    } else {
-        // FALLBACK DISPOSITIVOS DE PLANTA (Si la pistola de lectura es el único canal o usas iOS)
-        // El visor se mantendrá abierto permitiendo enfocar el objetivo para el operario
+        }
+        timerId = setTimeout(cicloDeteccion, 230);
     }
+
+    async function iniciar(etiqueta, iconoHtml) {
+        if (activo) return;
+        activo = true;
+
+        cartel.innerHTML = `<span>${etiqueta}</span> <span>${iconoHtml}</span>`;
+        modal.style.display = 'flex';
+
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: false
+        });
+
+        video.srcObject = stream;
+        cicloDeteccion();
+    }
+
+    function detener(cancelado = true) {
+        activo = false;
+        clearTimeout(timerId);
+        if (stream) {
+            stream.getTracks().forEach(t => t.stop());
+            stream = null;
+        }
+        video.srcObject = null;
+        modal.style.display = 'none';
+        onCamaraCerrada(cancelado);
+    }
+
+    return { iniciar, detener };
+})();
+  
+async function simularToggleCamara() {
+    botonPrevio = botonActivo;
+    if (botonActivo !== 'OK') await simularToggleCamaraEvidencia();
+
+    camaraActivaHardware = true;
+    estadoSecuenciaActual = 'CAMARA_NEGRA';
+    await EscanerBodega.iniciar(botonActivo, MAPA_ICONOS[botonActivo]);
 }
 
 function apagarCamaraHardware() {
+    EscanerBodega.detener(true);
+}
 
-    if (streamActivoBodega) {
-        streamActivoBodega.getTracks().forEach(track => track.stop());
-    }
-    document.getElementById('modal-escaneo-gigante').style.display = "none";
+function onCamaraCerrada(cancelado) {
     camaraActivaHardware = false;
-    // Si se cerró sin lectura, procesa la excepción vacía para retornar los botones al estado inicial
-    if (document.getElementById('txt-lector').value.trim() === "") {
-        procesarLectura({ key: 'Enter' });
-    }
-    estadoSecuenciaActual = "BOTONERA";
+    estadoSecuenciaActual = 'BOTONERA';
+    if (cancelado) procesarCodigoBodega('');
 }
 
 // 6. CONTROL DE MUTACIONES ERGONÓMICAS DE LA FRANJA DE HARDWARE (CON CURSOR GRUESO A LA IZQUIERDA)
@@ -1059,11 +1081,6 @@ function alternarPausaLinea() {
     const btn = document.getElementById('btn-pausa-dinamico');
     const capaPausa = document.getElementById('capa-pausa');
     const ahora = Date.now();
-    let HH = new Date();
-    HH.setHours(10,0,0,0);
-    HH10c00 = HH.getTime();
-    HH.setHours(10,10,0,0);
-    HH10c10 = HH.getTime();
 
     if (!lineaEnPausa) {
         // DETENCIÓN: Se calcula cuánto se trabajó en el SKU previo antes de congelar la línea
@@ -1111,7 +1128,7 @@ function alternarPausaLinea() {
         };
 
         histLecturasPRD.unshift(registroPausa);
-        histPausasPRD.unshift(registroPausa);
+        histPausasPRD.push(registroPausa);
         enviarAGoogleSheets(registroPausa);
         guardarEnMemoriaLocal();
         actualizarTablaVista();
@@ -1146,7 +1163,12 @@ function solicitarAnulacion(idRegistro) {
         // =========================================================================
         // RESTRUCTURACIÓN CRÍTICA: GESTIÓN DE ANULACIÓN CON ENFOQUE EN REVISIONES
         // =========================================================================
-
+        if ( registro.sku === "PAUSA" ) {
+            const indexPau = histPausasPRD.findIndex(itemPau =>  // se rescata el index para hacerle un splice no se necesita anulado
+            itemPau.id === idRegistro );
+            console.log( `Puntero indexPau  ${indexPau} splice en Pausas ( se está anulando un pausas ).` );        
+            if ( indexPau !== -1 ) { histPausasPRD.splice(indexPau, 1)};
+        };
         if (registro.cantRev > 1) {
             // Buscamos al padre exacto en la historia de la pieza: mismo QR, que esté oculto y con una revisión menos
             const registroPadre = histRezagadosPRD.find(itemRez => 
@@ -1157,7 +1179,8 @@ function solicitarAnulacion(idRegistro) {
 
             if (registroPadre) {
                 // LE DEVOLVEMOS El boton anulado en la interfaz del Motorola
-                registroPadre.esSucedido = false; 
+                registroPadre.esSucedido = false;
+                registroPadre.sincOlap = "modif";
            //   registroPadre.sincronizado = false; // No se vuelve a actualizar en la nube ya está, el registro anulado SI
                 console.log(`♻️ Árbol genealógico restaurado: Padre revivido en Rezagados para el QR: ${registro.qr}`);
             } else {
@@ -1175,7 +1198,7 @@ function solicitarAnulacion(idRegistro) {
         // 🚨 CRUCIAL PARA MODO OFFLINE: 
         // Forzamos sincronizado en false para que el filtro de la cola lo detecte.
         registro.sincronizado = false; 
-
+        registro.sincOlap = "modif";
         if ( registro.estadoDestino !== "OK" ) {
             const indexRez = histRezagadosPRD.findIndex(itemRez =>  // se rescata el index para hacerle un splice no se necesita anulado
             itemRez.id === idRegistro );
@@ -1350,7 +1373,7 @@ async function enviarAGoogleSheets(objetoRegistro) {
         // 4. El bloque 'finally' se ejecuta SIEMPRE (tanto si funcionó como si falló)
         // Solo ahora que terminó el proceso, liberamos la bandera
         estaProcesandoCola = false;
-        sonarBip750Hz("587","0.3");
+        sonarBip750Hz("587","0.4");
         reprocesarColaPendiente();
     }
 }
