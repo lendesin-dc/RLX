@@ -709,14 +709,14 @@ function procesarCodigoBodega(valorCrudo) {
   // --- ORIGEN SEGUN MATRIZ GANTT  ---
   // Buscamos la Orden de Compra del QR (loteLect) en la GANTT 
   var tieneGantt = matrizGantt.find(function(fila) {
-    // fila[1] corresponde a la columnas A y B de la GANTT (SKU y Orden de Compra ) que coinciden con contenido de cadenaQR  
-    return ( fila[1].toString().trim() === loteLect.trim() && fila[0].toString().trim() === skuLect.trim() ); // si encuentra la O compra coincidencia lo trae
+    // fila[1] corresponde a la columnas B y C de la GANTT (SKU y Orden de Compra ) que coinciden con contenido de cadenaQR  
+    return ( fila[2].toString().trim() === loteLect.trim() && fila[1].toString().trim() === skuLect.trim() ); // si encuentra la O compra coincidencia lo trae
     });
 
   if (tieneGantt) {   // coincidencia con la GANTT, diferente de vacio es verdadero
-        // ¡CORRESPONDE! Enriquecemos trayendo Origen (col C / índice 2) y Estado Origen (col D / índice 3)
-        IDORIGEN = tieneGantt[2];  // se usa de acuerdo a GANTT B-00 en la Gantt
-        IDESTADOORIGEN = tieneGantt[3];   // en la Gantt pondremos guión para el KIT
+        // ¡CORRESPONDE! Enriquecemos trayendo Origen (col D / índice 2) y Estado Origen (col E / índice 3)
+        IDORIGEN = tieneGantt[3];  // se usa de acuerdo a GANTT B-00 en la Gantt
+        IDESTADOORIGEN = tieneGantt[4];   // en la Gantt pondremos guión para el KIT
         // Forzamos letras BLANCAS en tu cartel de éxito 
         if (elementoOCompraPantalla) {
             elementoOCompraPantalla.style.color = "white";
