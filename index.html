@@ -549,7 +549,7 @@ var matrizSubtotales = obtenerMatrizSubtotalesJSON();
         resumen: matrizSubtotales  // <--- ¡AQUÍ ENTRA LA MAGIA AUTOMÁTICA!        
         };
 
-    if ( urlPuesto === "LINEA-X" ) {
+   // if ( urlPuesto !== "LINEA-X" ) {
     try {
         fetch(URL_GOOGLE_APP, {
             method: "POST",
@@ -563,7 +563,7 @@ var matrizSubtotales = obtenerMatrizSubtotalesJSON();
     } catch (error) {
         alert("Archivo guardado localmente.");
         }
-    } 
+  //  } 
 
     try {
         fetch(URL_GOOGLE_CORREO, {
